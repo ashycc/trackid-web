@@ -76,9 +76,9 @@ const webSiteSchema = {
           <div class="nav-right">
             <ul class="nav-links">
               <li><a href="/story">Story</a></li>
-              <li><a href="/" class="notranslate">The Flock</a></li>
+              <li><a href="/" class="notranslate" data-i18n="the-flock">The Flock</a></li>
             </ul>
-            <a href="/upload" class="nav-cta notranslate">Show Your Duck</a>
+            <a href="/upload" class="nav-cta notranslate" data-i18n="show-your-duck">Show Your Duck</a>
             <div class="lang-dropdown" id="lang-dropdown">
               <button class="lang-toggle" id="lang-toggle" aria-label="Switch language">EN</button>
               <ul class="lang-menu" id="lang-menu">
@@ -94,7 +94,7 @@ const webSiteSchema = {
                 <li><a href="#" data-lang="ru">Русский</a></li>
               </ul>
             </div>
-            <button class="theme-toggle notranslate" aria-label="Toggle theme">Dark</button>
+            <button class="theme-toggle notranslate" data-i18n-dark="dark" data-i18n-light="light" aria-label="Toggle theme">Dark</button>
           </div>
         </nav>
         <div id="google_translate_element" style="display:none;"></div>
@@ -147,12 +147,42 @@ const webSiteSchema = {
 </html>
 
 <script>
+  // Manual i18n for terms Google Translate gets wrong
+  const _i18n: Record<string, Record<string, string>> = {
+    'the-flock':      { en: 'The Flock', 'zh-CN': '鸭群', ja: 'ダックたち', ko: '오리떼', fr: 'Le Troupeau', de: 'Die Schar', es: 'La Bandada', pt: 'O Bando', it: 'Lo Stormo', ru: 'Стая' },
+    'show-your-duck': { en: 'Show Your Duck', 'zh-CN': '晒你的鸭', ja: 'アヒルを見せて', ko: '오리를 보여줘', fr: 'Montre ton canard', de: 'Zeig deine Ente', es: 'Muestra tu pato', pt: 'Mostre seu pato', it: 'Mostra la tua anatra', ru: 'Покажи утку' },
+    'dark':           { en: 'Dark', 'zh-CN': '深色', ja: 'ダーク', ko: '다크', fr: 'Sombre', de: 'Dunkel', es: 'Oscuro', pt: 'Escuro', it: 'Scuro', ru: 'Тёмная' },
+    'light':          { en: 'Light', 'zh-CN': '浅色', ja: 'ライト', ko: '라이트', fr: 'Clair', de: 'Hell', es: 'Claro', pt: 'Claro', it: 'Chiaro', ru: 'Светлая' },
+  };
+
+  function _getLang(): string {
+    const m = document.cookie.match(/googtrans=\/en\/([\w-]+)/);
+    return m ? m[1] : 'en';
+  }
+
+  function _applyI18n() {
+    const lang = _getLang();
+    document.querySelectorAll<HTMLElement>('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n!;
+      if (_i18n[key]?.[lang]) el.textContent = _i18n[key][lang];
+    });
+    // Theme toggle
+    const themeBtn = document.querySelector<HTMLElement>('.theme-toggle');
+    if (themeBtn) {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const key = isDark ? 'light' : 'dark';
+      themeBtn.textContent = _i18n[key]?.[lang] || (isDark ? 'Light' : 'Dark');
+    }
+  }
+
   // Theme toggle
   const toggle = document.querySelector('.theme-toggle');
   if (toggle) {
     const update = () => {
+      const lang = _getLang();
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      toggle.textContent = isDark ? 'Light' : 'Dark';
+      const key = isDark ? 'light' : 'dark';
+      toggle.textContent = _i18n[key]?.[lang] || (isDark ? 'Light' : 'Dark');
     };
     update();
     toggle.addEventListener('click', () => {
@@ -187,6 +217,7 @@ const webSiteSchema = {
     const existing = document.cookie.match(/googtrans=\/en\/([\w-]+)/);
     if (existing && existing[1] !== 'en') {
       langBtn.textContent = langNames[existing[1]] || existing[1].toUpperCase();
+      _applyI18n();
     }
 
     langBtn.addEventListener('click', (e) => {
@@ -206,6 +237,7 @@ const webSiteSchema = {
 
         document.cookie = `googtrans=/en/${target};path=/`;
         document.cookie = `googtrans=/en/${target};path=/;domain=${location.hostname}`;
+        _applyI18n();
 
         // Try to translate immediately, or poll until GT is ready
         const sel = document.querySelector('.goog-te-combo') as HTMLSelectElement;

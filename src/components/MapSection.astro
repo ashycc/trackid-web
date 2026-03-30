@@ -34,11 +34,21 @@ const { riders } = Astro.props;
 
     L.control.attribution({ prefix: '<a href="https://leafletjs.com">Leaflet</a>' }).addTo(map);
 
-    // Grayscale tile layer (industrial aesthetic)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+    // Pick tile style based on current theme
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var tileStyle = isDark ? 'dark_nolabels' : 'light_nolabels';
+    var tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/' + tileStyle + '/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
       maxZoom: 18,
     }).addTo(map);
+
+    // Swap tiles when theme changes
+    var observer = new MutationObserver(function() {
+      var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+      var style = dark ? 'dark_nolabels' : 'light_nolabels';
+      tileLayer.setUrl('https://{s}.basemaps.cartocdn.com/' + style + '/{z}/{x}/{y}{r}.png');
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
     // Signal Red markers
     const redIcon = L.divIcon({

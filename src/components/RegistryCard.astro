@@ -1,0 +1,33 @@
+---
+interface Props {
+  registryId: number;
+  riderName: string;
+  location: string;
+  photoUrl?: string;
+  message?: string;
+}
+
+const { registryId, riderName, location, photoUrl, message } = Astro.props;
+const tkid = `TKID-${String(registryId).padStart(4, '0')}`;
+---
+
+<article
+  class="registry-card"
+  data-photo={photoUrl || ''}
+  data-tkid={tkid}
+  data-rider={riderName}
+  data-location={location}
+  data-message={message || ''}
+  style="cursor: pointer;"
+>
+  {photoUrl ? (
+    <img class="card-img" src={photoUrl} alt={`${riderName}'s ride`} loading="lazy" />
+  ) : (
+    <div class="card-img-placeholder notranslate">TRACKID</div>
+  )}
+  <div class="card-meta">
+    <div class="card-id">{tkid}</div>
+    <div class="card-rider">{riderName}</div>
+    <div class="card-loc">{location}</div>
+  </div>
+</article>

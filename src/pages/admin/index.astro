@@ -1,0 +1,188 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getSessionFromCookie } from '../../lib/auth';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+// Auth check
+const secret = import.meta.env.ADMIN_SESSION_SECRET;
+if (!getSessionFromCookie(Astro.request.headers.get('cookie'), secret)) {
+  return Astro.redirect('/admin/login');
+}
+
+// Get current filter
+const status = Astro.url.searchParams.get('status') || 'pending';
+const validStatuses = ['pending', 'approved', 'rejected'];
+const currentStatus = validStatuses.includes(status) ? status : 'pending';
+
+// Fetch submissions
+const { data: submissions } = await supabaseAdmin
+  .from('submissions')
+  .select('*')
+  .eq('status', currentStatus)
+  .order('created_at', { ascending: false });
+
+// Get counts for tabs
+const { count: pendingCount } = await supabaseAdmin
+  .from('submissions')
+  .select('*', { count: 'exact', head: true })
+  .eq('status', 'pending');
+
+const { count: approvedCount } = await supabaseAdmin
+  .from('submissions')
+  .select('*', { count: 'exact', head: true })
+  .eq('status', 'approved');
+
+const { count: rejectedCount } = await supabaseAdmin
+  .from('submissions')
+  .select('*', { count: 'exact', head: true })
+  .eq('status', 'rejected');
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+
+function formatTkid(id: number | null): string {
+  if (!id) return '—';
+  return `TKID-${String(id).padStart(4, '0')}`;
+}
+
+function photoUrl(path: string): string {
+  return `${supabaseUrl}/storage/v1/object/public/rider-photos/${path}`;
+}
+---
+
+<Layout title="TRACKID — Admin Dashboard">
+  <section class="section">
+    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <span class="section-label">Admin Dashboard</span>
+        <h1 class="display" style="font-size: 32px; font-weight: 700; letter-spacing: 3px; margin-top: 12px; line-height: 1.1;">
+          Submissions
+        </h1>
+      </div>
+      <form method="POST" action="/api/admin/logout">
+        <button type="submit" class="btn btn-ghost">Logout</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="admin-tabs">
+      <a href="/admin?status=pending" class:list={['admin-tab', { active: currentStatus === 'pending' }]}>
+        Pending <span class="tab-count">{pendingCount ?? 0}</span>
+      </a>
+      <a href="/admin?status=approved" class:list={['admin-tab', { active: currentStatus === 'approved' }]}>
+        Approved <span class="tab-count">{approvedCount ?? 0}</span>
+      </a>
+      <a href="/admin?status=rejected" class:list={['admin-tab', { active: currentStatus === 'rejected' }]}>
+        Rejected <span class="tab-count">{rejectedCount ?? 0}</span>
+      </a>
+    </div>
+
+    {(!submissions || submissions.length === 0) ? (
+      <p style="color: var(--muted); margin-top: 32px;">No {currentStatus} submissions.</p>
+    ) : (
+      <div class="admin-grid">
+        {submissions.map((s) => (
+          <div class="admin-card">
+            <img class="admin-card-img" src={photoUrl(s.photo_path)} alt={`${s.rider_name}'s ride`} loading="lazy" />
+            <div class="admin-card-body">
+              {s.registry_id && <div class="card-id">{formatTkid(s.registry_id)}</div>}
+              <div class="card-rider">{s.rider_name}</div>
+              <div class="card-loc">{s.location}</div>
+              {s.email && <div class="card-loc" style="margin-top: 4px;">{s.email}</div>}
+              <div class="card-loc" style="margin-top: 8px;">
+                {new Date(s.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+              </div>
+
+              {currentStatus === 'pending' && (
+                <div class="admin-actions">
+                  <form method="POST" action="/api/admin/approve">
+                    <input type="hidden" name="id" value={s.id} />
+                    <button type="submit" class="btn btn-primary" style="padding: 8px 16px;">Approve</button>
+                  </form>
+                  <form method="POST" action="/api/admin/reject">
+                    <input type="hidden" name="id" value={s.id} />
+                    <button type="submit" class="btn btn-ghost" style="padding: 8px 16px;">Reject</button>
+                  </form>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </section>
+</Layout>
+
+<style>
+  .admin-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--weld);
+    margin-bottom: 24px;
+  }
+
+  .admin-tab {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 12px 20px;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .admin-tab:hover {
+    color: var(--ink);
+  }
+
+  .admin-tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--signal-red);
+  }
+
+  .tab-count {
+    color: var(--signal-red);
+    margin-left: 4px;
+  }
+
+  .admin-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 640px) {
+    .admin-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .admin-card {
+    border: 1px solid var(--weld);
+    display: flex;
+    overflow: hidden;
+  }
+
+  .admin-card-img {
+    width: 160px;
+    min-height: 160px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--surface);
+  }
+
+  .admin-card-body {
+    padding: 12px;
+    flex: 1;
+  }
+
+  .admin-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+</style>

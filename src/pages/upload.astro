@@ -1,0 +1,250 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const hcaptchaSiteKey = import.meta.env.PUBLIC_HCAPTCHA_SITE_KEY || '';
+---
+
+<Layout title="TRACKID — Show Us Your Duck" description="Upload your duck sticker photo and join the TRACKID rider registry. Show the world where your Beijing roast duck has landed.">
+  <section class="section">
+    <div class="section-header">
+      <span class="section-label">Upload</span>
+      <h1 class="display" style="font-size: 48px; font-weight: 700; letter-spacing: 4px; margin-top: 16px; line-height: 1.1;">
+        Show Us<br />Your Duck
+      </h1>
+      <p style="max-width: 600px; margin-top: 16px; color: var(--muted); line-height: 1.7;">
+        Got a <span class="notranslate">TRACKID</span> duck on your frame? Your helmet? Your toolbox? Take a photo and throw it up here. Blurry is fine. Dirty is better. This isn't a product catalog — it's a map of everywhere this duck has landed.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div id="upload-alert" style="display: none;"></div>
+
+    <form id="upload-form" class="upload-form" enctype="multipart/form-data">
+      <div class="input-group">
+        <label class="input-label" for="photo">Photo</label>
+        <div class="upload-dropzone" id="dropzone">
+          <div class="dropzone-icon">&#x2191;</div>
+          <div class="dropzone-text">Drop your photo here or click to browse</div>
+          <div class="dropzone-preview" id="preview" style="display: none;"></div>
+          <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/webp" style="display: none;" required />
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label" for="rider_name">Rider Name</label>
+        <input class="input-field" type="text" id="rider_name" name="rider_name" placeholder="Your name" required />
+      </div>
+
+      <div class="input-group">
+        <label class="input-label" for="location">Location</label>
+        <input class="input-field" type="text" id="location" name="location" placeholder="City, Country" required />
+      </div>
+
+      <div class="input-group">
+        <label class="input-label" for="email">Email (optional)</label>
+        <input class="input-field" type="email" id="email" name="email" placeholder="Get notified when your ride goes live" />
+      </div>
+
+      <div class="input-group">
+        <label class="input-label" for="message">Say Something (optional)</label>
+        <textarea class="input-field" id="message" name="message" rows="3" placeholder="Why the duck? What are you riding? Whatever."></textarea>
+      </div>
+
+      {hcaptchaSiteKey && (
+        <div class="input-group" id="captcha-group">
+          <div class="h-captcha" data-sitekey={hcaptchaSiteKey}></div>
+        </div>
+      )}
+
+      <button type="submit" class="btn btn-primary" id="submit-btn">Send the Duck 🦆</button>
+    </form>
+
+    {hcaptchaSiteKey && (
+      <script is:inline src="https://js.hcaptcha.com/1/api.js" async defer></script>
+    )}
+  </section>
+
+  <!-- Success Modal -->
+  <div class="modal-overlay" id="success-modal" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-icon">🦆</div>
+      <h2 class="modal-title">Duck Received!</h2>
+      <p class="modal-text">Your photo is in the queue. We'll review it and add it to the flock once it's approved. No refunds.</p>
+      <button class="btn btn-primary modal-close" id="modal-close">Got It</button>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .upload-form {
+    max-width: 560px;
+  }
+
+  .dropzone-preview img {
+    max-height: 180px;
+    margin: 12px auto 0;
+    object-fit: contain;
+  }
+
+  .upload-dropzone.drag-over {
+    border-color: var(--signal-red);
+  }
+
+  .btn[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-box {
+    background: var(--paper);
+    border: 1px solid var(--weld);
+    padding: 48px 40px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+  }
+
+  .modal-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  .modal-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+
+  .modal-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+
+  .modal-close {
+    min-width: 140px;
+  }
+</style>
+
+<script>
+  const form = document.getElementById('upload-form') as HTMLFormElement;
+  const dropzone = document.getElementById('dropzone')!;
+  const fileInput = document.getElementById('photo') as HTMLInputElement;
+  const preview = document.getElementById('preview')!;
+  const alertBox = document.getElementById('upload-alert')!;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const modal = document.getElementById('success-modal')!;
+  const modalClose = document.getElementById('modal-close')!;
+
+  // Click to browse
+  dropzone.addEventListener('click', () => fileInput.click());
+
+  // Drag and drop
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('drag-over');
+  });
+
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('drag-over');
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+    if (e.dataTransfer?.files.length) {
+      fileInput.files = e.dataTransfer.files;
+      showPreview(e.dataTransfer.files[0]);
+    }
+  });
+
+  // File selected
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files?.length) {
+      showPreview(fileInput.files[0]);
+    }
+  });
+
+  function showPreview(file: File) {
+    // Validate size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      showAlert('error', 'File too large. Maximum size is 10MB.');
+      fileInput.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      preview.innerHTML = `<img src="${e.target?.result}" alt="Preview" />`;
+      preview.style.display = 'block';
+      dropzone.querySelector('.dropzone-icon')!.style.display = 'none';
+      dropzone.querySelector('.dropzone-text')!.textContent = file.name;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function showAlert(type: string, message: string) {
+    alertBox.className = `alert alert-${type}`;
+    alertBox.textContent = message;
+    alertBox.style.display = 'block';
+  }
+
+  // Submit
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    alertBox.style.display = 'none';
+
+    if (!fileInput.files?.length) {
+      showAlert('error', 'Please select a photo.');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'SUBMITTING...';
+
+    const formData = new FormData(form);
+
+    try {
+      const res = await fetch('/api/submit', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (res.ok) {
+        form.reset();
+        preview.style.display = 'none';
+        preview.innerHTML = '';
+        dropzone.querySelector('.dropzone-icon')!.style.display = '';
+        dropzone.querySelector('.dropzone-text')!.textContent = 'Drop your photo here or click to browse';
+        modal.style.display = 'flex';
+      } else {
+        showAlert('error', data.error || 'Something went wrong. Please try again.');
+      }
+    } catch {
+      showAlert('error', 'Network error. Please try again.');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'SEND THE DUCK 🦆';
+    }
+  });
+
+  modalClose.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+</script>

@@ -1,0 +1,235 @@
+---
+import '../styles/global.css';
+import '../styles/components.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogType?: string;
+}
+
+const { title = 'TRACKID', description = 'A Beijing roast duck on a fixie — riding in dozens of countries. Show us where yours ended up.', ogType = 'website' } = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, 'https://trackidriders.com');
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "TRACKID",
+  "url": "https://trackidriders.com",
+  "description": "Beijing-based bicycle shop and cultural brand",
+  "sameAs": [
+    "https://www.instagram.com/trackid_beijing/",
+    "https://www.youtube.com/@TRACKID-Beijing"
+  ]
+};
+
+const webSiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "TRACKID",
+  "url": "https://trackidriders.com",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://trackidriders.com/?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL.href} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonicalURL.href} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <script type="application/ld+json" set:html={JSON.stringify(organizationSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(webSiteSchema)} />
+    <title class="notranslate">{title}</title>
+    <script is:inline>
+      (function() {
+        const theme = localStorage.getItem('theme');
+        if (theme) document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <slot name="nav">
+        <nav class="nav">
+          <a href="/" class="nav-brand">
+            <img src="/logo-black.png" srcset="/logo-black@2x.png 2x" alt="TRACKID" class="nav-logo" width="70" height="40" />
+          </a>
+          <button class="nav-toggle" aria-label="Toggle menu">&#9776;</button>
+          <div class="nav-right">
+            <ul class="nav-links">
+              <li><a href="/story">Story</a></li>
+              <li><a href="/">The Flock</a></li>
+            </ul>
+            <a href="/upload" class="nav-cta">Show Your Duck</a>
+            <div class="lang-dropdown" id="lang-dropdown">
+              <button class="lang-toggle" id="lang-toggle" aria-label="Switch language">EN</button>
+              <ul class="lang-menu" id="lang-menu">
+                <li><a href="#" data-lang="en">English</a></li>
+                <li><a href="#" data-lang="zh-CN">中文</a></li>
+                <li><a href="#" data-lang="ja">日本語</a></li>
+                <li><a href="#" data-lang="ko">한국어</a></li>
+                <li><a href="#" data-lang="fr">Français</a></li>
+                <li><a href="#" data-lang="de">Deutsch</a></li>
+                <li><a href="#" data-lang="es">Español</a></li>
+                <li><a href="#" data-lang="pt">Português</a></li>
+                <li><a href="#" data-lang="it">Italiano</a></li>
+                <li><a href="#" data-lang="ru">Русский</a></li>
+              </ul>
+            </div>
+            <button class="theme-toggle" aria-label="Toggle theme">Dark</button>
+          </div>
+        </nav>
+        <div id="google_translate_element" style="display:none;"></div>
+      </slot>
+      <main>
+        <slot />
+      </main>
+      <footer class="footer">
+        <div class="footer-inner">
+          <span class="footer-brand">
+            <img src="/logo-black.png" srcset="/logo-black@2x.png 2x" alt="TRACKID" class="nav-logo" width="70" height="40" />
+          </span>
+          <span class="footer-copy">&copy; {new Date().getFullYear()} <span class="notranslate">TRACKID</span> Registry</span>
+        </div>
+      </footer>
+    </div>
+    <script is:inline>
+      var _gtLoaded = false;
+      function _loadGT() {
+        if (_gtLoaded) return;
+        _gtLoaded = true;
+        var _pendingLang = (document.cookie.match(/googtrans=\/en\/([\w-]+)/) || [])[1];
+        window.googleTranslateElementInit = function() {
+          new google.translate.TranslateElement({
+            pageLanguage: 'en',
+            includedLanguages: 'en,zh-CN,ja,ko,fr,de,es,pt,it,ru',
+            autoDisplay: false,
+          }, 'google_translate_element');
+          // After GT init, trigger translation if cookie is set
+          if (_pendingLang && _pendingLang !== 'en') {
+            var _t = setInterval(function() {
+              var sel = document.querySelector('.goog-te-combo');
+              if (sel) {
+                clearInterval(_t);
+                sel.value = _pendingLang;
+                sel.dispatchEvent(new Event('change'));
+              }
+            }, 200);
+            setTimeout(function() { clearInterval(_t); }, 10000);
+          }
+        };
+        var s = document.createElement('script');
+        s.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+        document.head.appendChild(s);
+      }
+      // Auto-load if a non-English language cookie exists
+      if (/googtrans=\/en\/(?!en)/.test(document.cookie)) _loadGT();
+    </script>
+  </body>
+</html>
+
+<script>
+  // Theme toggle
+  const toggle = document.querySelector('.theme-toggle');
+  if (toggle) {
+    const update = () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      toggle.textContent = isDark ? 'Light' : 'Dark';
+    };
+    update();
+    toggle.addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const next = isDark ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      update();
+    });
+  }
+
+  // Mobile nav toggle
+  const navToggle = document.querySelector('.nav-toggle');
+  const navRight = document.querySelector('.nav-right');
+  if (navToggle && navRight) {
+    navToggle.addEventListener('click', () => {
+      navRight.classList.toggle('open');
+    });
+  }
+
+  // Language dropdown
+  const langBtn = document.getElementById('lang-toggle');
+  const langMenu = document.getElementById('lang-menu');
+  const langDropdown = document.getElementById('lang-dropdown');
+  if (langBtn && langMenu && langDropdown) {
+    const langNames: Record<string, string> = {
+      'en': 'EN', 'zh-CN': '中文', 'ja': 'JA', 'ko': 'KO',
+      'fr': 'FR', 'de': 'DE', 'es': 'ES', 'pt': 'PT', 'it': 'IT', 'ru': 'RU',
+    };
+
+    // Check current language from cookie
+    const existing = document.cookie.match(/googtrans=\/en\/([\w-]+)/);
+    if (existing && existing[1] !== 'en') {
+      langBtn.textContent = langNames[existing[1]] || existing[1].toUpperCase();
+    }
+
+    langBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      langDropdown.classList.toggle('open');
+      // Lazy-load Google Translate on first open
+      if (typeof _loadGT === 'function') _loadGT();
+    });
+
+    langMenu.querySelectorAll('a[data-lang]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = (link as HTMLElement).dataset.lang!;
+        langDropdown.classList.remove('open');
+        navRight?.classList.remove('open');
+        langBtn.textContent = langNames[target] || target.toUpperCase();
+
+        document.cookie = `googtrans=/en/${target};path=/`;
+        document.cookie = `googtrans=/en/${target};path=/;domain=${location.hostname}`;
+
+        // Try to translate immediately, or poll until GT is ready
+        const sel = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+        if (sel) {
+          sel.value = target;
+          sel.dispatchEvent(new Event('change'));
+        } else {
+          // GT not ready yet — poll for it
+          const poll = setInterval(() => {
+            const s = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+            if (s) {
+              clearInterval(poll);
+              s.value = target;
+              s.dispatchEvent(new Event('change'));
+            }
+          }, 300);
+          setTimeout(() => { clearInterval(poll); location.reload(); }, 8000);
+        }
+      });
+    });
+
+    // Close on outside click
+    document.addEventListener('click', () => {
+      langDropdown.classList.remove('open');
+    });
+  }
+</script>

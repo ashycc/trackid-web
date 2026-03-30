@@ -1,0 +1,135 @@
+/* ========================================
+   TRACKID Design System — Global Styles
+   ======================================== */
+
+/* --- Reset --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* --- Color Tokens --- */
+:root {
+  --paper: #ECE6DD;
+  --ink: #0D0D0D;
+  --signal-red: #D4213D;
+  --oxide: #7A4A2E;
+  --weld: #B8A88A;
+  --muted: #8A8279;
+  --surface: #E3DCD2;
+
+  --success: #4A7A3E;
+  --warning: #B8860B;
+}
+
+[data-theme="dark"] {
+  --paper: #1A1816;
+  --ink: #E3DCD2;
+  --signal-red: #E0354F;
+  --oxide: #C07A52;
+  --weld: #5A5247;
+  --muted: #8A8279;
+  --surface: #252220;
+}
+
+/* --- Spacing Tokens --- */
+:root {
+  --sp-2xs: 4px;
+  --sp-xs: 8px;
+  --sp-sm: 12px;
+  --sp-md: 16px;
+  --sp-lg: 24px;
+  --sp-xl: 32px;
+  --sp-2xl: 48px;
+  --sp-3xl: 64px;
+  --sp-4xl: 80px;
+}
+
+/* --- Base --- */
+html {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ink);
+  background: var(--paper);
+  transition: background 300ms ease, color 300ms ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+}
+
+a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+/* --- Typography --- */
+.display {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.mono {
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.section-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--oxide);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.oxide {
+  color: var(--oxide);
+}
+
+.red {
+  color: var(--signal-red);
+}
+
+/* --- Layout --- */
+.container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 var(--sp-lg);
+}
+
+.section {
+  padding: var(--sp-3xl) 0;
+  border-bottom: 1px solid var(--weld);
+}
+
+.section-header {
+  margin-bottom: var(--sp-xl);
+}
+
+/* --- Utilities --- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

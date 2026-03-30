@@ -1,0 +1,30 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+export const prerender = false;
+
+const error = Astro.url.searchParams.get('error');
+---
+
+<Layout title="TRACKID — Admin Login">
+  <section class="section">
+    <div class="section-header">
+      <span class="section-label">Admin</span>
+      <h1 class="display" style="font-size: 48px; font-weight: 700; letter-spacing: 4px; margin-top: 16px; line-height: 1.1;">
+        Dashboard<br />Login
+      </h1>
+    </div>
+  </section>
+
+  <section class="section">
+    {error && <div class="alert alert-error">Invalid password. Try again.</div>}
+
+    <form method="POST" action="/api/admin/login" style="max-width: 400px;">
+      <div class="input-group">
+        <label class="input-label" for="password">Password</label>
+        <input class="input-field" type="password" id="password" name="password" placeholder="Enter admin password" required autofocus />
+      </div>
+      <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+  </section>
+</Layout>

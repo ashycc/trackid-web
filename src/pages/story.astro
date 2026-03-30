@@ -1,0 +1,154 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="TRACKID — The Story" description="The TRACKID story: how a Beijing roast duck sticker inspired by the Columbus dove became a global track bike icon. Steel frames, fixed gears, no shortcuts." ogType="article">
+  <section class="section">
+    <div class="section-header">
+      <span class="section-label">The Story</span>
+      <h1 class="display" style="font-size: 48px; font-weight: 700; letter-spacing: 4px; margin-top: 16px; line-height: 1.1;">
+        A Duck That<br />Won't Stay Put
+      </h1>
+    </div>
+
+    <div class="story-body">
+      <p>Every steel frame rider knows the Columbus dove — that little white bird that says your tubes are the real deal. <span class="notranslate">TRACKID</span>'s Roast Duck sticker is our nod to that icon, swapping the Italian dove for a Beijing roast duck. Same oval. Same reverence. Way better flavor.</p>
+      <p>But the sticker is more than a design gag. It's <span class="notranslate">TRACKID</span> in one image.</p>
+      <p>Beijing roast duck is the city's defining dish — carved tableside, served on proper plates, the kind of thing that represents centuries of craft and culture. The track bike is our thing — steel frames, fixed gears, no shortcuts. One belongs to Beijing's culinary heritage, the other to its street riding scene. They shouldn't go together, but somehow they do. That tension is <span class="notranslate">TRACKID</span>: taking something iconic and serious, and putting it on two wheels where it doesn't belong.</p>
+      <p>We listed the sticker on AliExpress for the price of a cheap beer. No ads. No influencer drops. Just a duck on a bike, sitting between phone cases and LED strips. Then something happened.</p>
+      <p>A kid in London stuck it on a Vigorelli. A messenger in São Paulo slapped it on a beater Pista. Someone in Tokyo put it on a NJS frame worth more than our rent. A dude in Melbourne stuck it on his helmet, ruining a perfectly clean aesthetic. On purpose.</p>
+      <p>More and more orders across dozens of countries. Zero marketing budget. One very well-traveled duck.</p>
+      <p>This page is the proof. Every photo, every city, every rider who looked at this duck and thought: <em>yeah, that's mine.</em></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <span class="section-label">The Sticker</span>
+      <h2 class="display" style="font-size: 32px; font-weight: 700; letter-spacing: 3px; margin-top: 16px; line-height: 1.1;">
+        Peking Duck<br />Hot Duck
+      </h2>
+    </div>
+
+    <div class="sticker-showcase">
+      <img src="/pekingduck-sticker.jpg" alt="TRACKID Peking Duck sticker — Columbus-style oval with a roast duck, next to the HOT DUCK spec sheet" class="sticker-img" />
+    </div>
+  </section>
+
+  <section class="section" style="padding-bottom: 80px;">
+    <div class="section-header">
+      <span class="section-label">Contact</span>
+      <h2 class="display" style="font-size: 32px; font-weight: 700; letter-spacing: 3px; margin-top: 16px; line-height: 1.1;">
+        Get In Touch
+      </h2>
+    </div>
+    <p style="margin-top: 16px; line-height: 1.7; color: var(--muted);">
+      Questions, collabs, or just want to talk bikes and ducks?
+    </p>
+    <a href="mailto:trackid_bj@126.com" class="contact-email">trackid_bj@126.com</a>
+
+    <div class="social-links">
+      <a href="https://www.instagram.com/trackid_beijing/" target="_blank" rel="noopener" class="social-icon" aria-label="Instagram">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="5" />
+          <circle cx="12" cy="12" r="5" />
+          <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      </a>
+      <a href="https://www.youtube.com/@TRACKID-Beijing" target="_blank" rel="noopener" class="social-icon" aria-label="YouTube">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" />
+          <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="currentColor" stroke="none" />
+        </svg>
+      </a>
+      <a href="https://www.xiaohongshu.com/user/profile/5b474eb7e8ac2b3455d564a4" target="_blank" rel="noopener" class="social-icon" aria-label="Xiaohongshu">
+        <img src="/xiaohongshu.jpg" alt="Xiaohongshu" class="social-img" width="22" height="22" />
+      </a>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .story-body {
+    max-width: 600px;
+  }
+
+  .story-body p {
+    margin-bottom: 16px;
+    line-height: 1.7;
+  }
+
+  .story-body em {
+    font-style: italic;
+  }
+
+  .sticker-showcase {
+    max-width: 420px;
+    margin-top: 24px;
+  }
+
+  .sticker-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    mix-blend-mode: multiply;
+  }
+
+  :global([data-theme="dark"]) .sticker-showcase {
+    background: #f0ece6;
+    padding: 16px;
+  }
+
+  :global([data-theme="dark"]) .sticker-img {
+    mix-blend-mode: normal;
+  }
+
+  .contact-email {
+    display: inline-block;
+    margin-top: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: var(--signal-red);
+    text-decoration: none;
+    border-bottom: 1px solid var(--signal-red);
+    padding-bottom: 2px;
+    transition: opacity 0.15s ease;
+  }
+
+  .contact-email:hover {
+    opacity: 0.7;
+  }
+
+  .social-links {
+    display: flex;
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .social-icon {
+    color: var(--muted);
+    transition: color 0.15s ease;
+  }
+
+  .social-icon:hover {
+    color: var(--ink);
+  }
+
+  .social-img {
+    display: block;
+    border-radius: 4px;
+    mix-blend-mode: multiply;
+    opacity: 0.55;
+    transition: opacity 0.15s ease;
+  }
+
+  .social-icon:hover .social-img {
+    opacity: 0.85;
+  }
+
+  :global([data-theme="dark"]) .social-img {
+    filter: invert(1);
+    mix-blend-mode: lighten;
+  }
+</style>

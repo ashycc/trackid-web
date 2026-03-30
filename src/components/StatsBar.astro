@@ -1,0 +1,24 @@
+---
+interface Props {
+  totalRiders: number;
+  countries: number;
+  cities: number;
+}
+
+const { totalRiders, countries, cities } = Astro.props;
+---
+
+<div class="map-stats-bar">
+  <div class="map-stat">
+    <div class="stat-value">{totalRiders}</div>
+    <div class="stat-label">🦆 Ducks Spotted</div>
+  </div>
+  <div class="map-stat">
+    <div class="stat-value">{countries}</div>
+    <div class="stat-label">🌍 Countries Reached</div>
+  </div>
+  <div class="map-stat">
+    <div class="stat-value">{cities}</div>
+    <div class="stat-label">🏙️ Cities Hit</div>
+  </div>
+</div>

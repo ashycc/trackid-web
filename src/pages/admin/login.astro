@@ -4,6 +4,7 @@ import Layout from '../../layouts/Layout.astro';
 export const prerender = false;
 
 const error = Astro.url.searchParams.get('error');
+const hcaptchaSiteKey = import.meta.env.PUBLIC_HCAPTCHA_SITE_KEY || '';
 ---
 
 <Layout title="TRACKID — Admin Login">
@@ -24,7 +25,15 @@ const error = Astro.url.searchParams.get('error');
         <label class="input-label" for="password">Password</label>
         <input class="input-field" type="password" id="password" name="password" placeholder="Enter admin password" required autofocus />
       </div>
+      {hcaptchaSiteKey && (
+        <div class="input-group">
+          <div class="h-captcha" data-sitekey={hcaptchaSiteKey}></div>
+        </div>
+      )}
       <button type="submit" class="btn btn-primary">Login</button>
     </form>
+    {hcaptchaSiteKey && (
+      <script is:inline src="https://js.hcaptcha.com/1/api.js" async defer></script>
+    )}
   </section>
 </Layout>

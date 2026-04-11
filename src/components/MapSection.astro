@@ -35,6 +35,12 @@ const { markers, customers = [] } = Astro.props;
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
 <script is:inline define:vars={{ markers, customers }}>
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s || '';
+    return d.innerHTML;
+  }
+
   var script = document.createElement('script');
   script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
   script.onload = function() {
@@ -76,7 +82,7 @@ const { markers, customers = [] } = Astro.props;
         .bindPopup(
           '<div style="padding:8px 10px;">' +
             '<div style="font-family:monospace;font-size:11px;color:#D4213D;letter-spacing:1px;">STICKER SPOTTED</div>' +
-            '<div style="font-family:monospace;font-size:12px;color:#8A8279;margin-top:4px;">' + c.city + ', ' + c.country + '</div>' +
+            '<div style="font-family:monospace;font-size:12px;color:#8A8279;margin-top:4px;">' + esc(c.city) + ', ' + esc(c.country) + '</div>' +
           '</div>',
           { maxWidth: 200, className: 'trackid-popup' }
         )
@@ -109,15 +115,15 @@ const { markers, customers = [] } = Astro.props;
       // Build scrollable popup with all riders
       var popupHtml = '<div style="max-height:280px;overflow-y:auto;min-width:180px;">';
       m.riders.forEach(function(r, idx) {
-        var msgHtml = r.message ? '<div style="font-size:12px;color:#8A8279;margin-top:6px;line-height:1.4;font-style:italic;">"' + r.message + '"</div>' : '';
+        var msgHtml = r.message ? '<div style="font-size:12px;color:#8A8279;margin-top:6px;line-height:1.4;font-style:italic;">"' + esc(r.message) + '"</div>' : '';
         if (idx > 0) popupHtml += '<div style="border-top:1px solid #ddd;"></div>';
         popupHtml +=
           '<div>' +
-            '<img src="' + r.photo + '" alt="' + r.name + '" style="width:100%;height:120px;object-fit:cover;display:block;" />' +
+            '<img src="' + esc(r.photo) + '" alt="' + esc(r.name) + '" style="width:100%;height:120px;object-fit:cover;display:block;" />' +
             '<div style="padding:8px 4px 4px;">' +
-              '<div style="font-family:monospace;color:#D4213D;font-size:11px;letter-spacing:1px;">' + r.tkid + '</div>' +
-              '<div style="font-weight:500;font-size:13px;margin-top:2px;">' + r.name + '</div>' +
-              '<div style="font-family:monospace;font-size:11px;color:#8A8279;margin-top:2px;">' + r.location + '</div>' +
+              '<div style="font-family:monospace;color:#D4213D;font-size:11px;letter-spacing:1px;">' + esc(r.tkid) + '</div>' +
+              '<div style="font-weight:500;font-size:13px;margin-top:2px;">' + esc(r.name) + '</div>' +
+              '<div style="font-family:monospace;font-size:11px;color:#8A8279;margin-top:2px;">' + esc(r.location) + '</div>' +
               msgHtml +
             '</div>' +
           '</div>';

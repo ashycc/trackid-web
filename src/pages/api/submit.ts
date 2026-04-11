@@ -59,9 +59,12 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       return json({ error: 'File too large. Maximum size is 10MB.' }, 400);
     }
 
-    // hCaptcha verification or rate limit fallback
+    // hCaptcha verification (mandatory when configured) or rate limit fallback
     const hcaptchaSecret = import.meta.env.HCAPTCHA_SECRET_KEY;
-    if (hcaptchaSecret && captchaToken) {
+    if (hcaptchaSecret) {
+      if (!captchaToken) {
+        return json({ error: 'Captcha verification required.' }, 400);
+      }
       // Verify hCaptcha token
       const verifyRes = await fetch('https://api.hcaptcha.com/siteverify', {
         method: 'POST',
@@ -73,7 +76,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         return json({ error: 'Captcha verification failed. Please try again.' }, 400);
       }
     } else {
-      // Fallback: IP rate limiting
+      // Fallback: IP rate limiting (only when hCaptcha is not configured)
       const ip = clientAddress || request.headers.get('x-forwarded-for') || 'unknown';
       if (!checkRateLimit(ip)) {
         return json({ error: 'Too many uploads. Please try again later.' }, 429);

@@ -45,11 +45,18 @@ const { markers, customers = [] } = Astro.props;
   script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
   script.onload = function() {
     var map = L.map('map', {
-      scrollWheelZoom: false,
+      scrollWheelZoom: true,
       touchZoom: true,
-      zoomSnap: 0.25,
+      zoomSnap: 0,
       zoomDelta: 0.5,
-      wheelDebounceTime: 80,
+      wheelPxPerZoomLevel: 120,
+      inertia: true,
+      inertiaDeceleration: 2000,
+      inertiaMaxSpeed: 1500,
+      easeLinearity: 0.25,
+      zoomAnimation: true,
+      fadeAnimation: true,
+      markerZoomAnimation: true,
       attributionControl: false,
     }).setView([30, 0], 2);
 

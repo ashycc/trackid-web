@@ -48,8 +48,8 @@ const { markers, customers = [] } = Astro.props;
       scrollWheelZoom: true,
       touchZoom: true,
       zoomSnap: 0,
-      zoomDelta: 1,
-      wheelPxPerZoomLevel: 60,
+      zoomDelta: 2,
+      wheelPxPerZoomLevel: 30,
       inertia: true,
       inertiaDeceleration: 2000,
       inertiaMaxSpeed: 1500,
@@ -103,11 +103,11 @@ const { markers, customers = [] } = Astro.props;
       // Stacked ducks for multi-rider cities
       var iconHtml;
       if (count === 1) {
-        iconHtml = '<div style="font-size:20px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3));">🦆</div>';
+        iconHtml = '<div style="font-size:32px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.3));">🦆</div>';
       } else {
-        iconHtml = '<div style="position:relative;width:32px;height:28px;">';
+        iconHtml = '<div style="position:relative;width:52px;height:44px;">';
         for (var i = 0; i < Math.min(count, 3); i++) {
-          iconHtml += '<div style="position:absolute;font-size:16px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3));left:' + (i * 6) + 'px;top:' + (i * 4) + 'px;">🦆</div>';
+          iconHtml += '<div style="position:absolute;font-size:26px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.3));left:' + (i * 10) + 'px;top:' + (i * 6) + 'px;">🦆</div>';
         }
         iconHtml += '</div>';
       }
@@ -115,8 +115,8 @@ const { markers, customers = [] } = Astro.props;
       var duckIcon = L.divIcon({
         className: 'trackid-marker',
         html: iconHtml,
-        iconSize: count > 1 ? [32, 28] : [24, 24],
-        iconAnchor: count > 1 ? [16, 14] : [12, 12],
+        iconSize: count > 1 ? [52, 44] : [36, 36],
+        iconAnchor: count > 1 ? [26, 22] : [18, 18],
       });
 
       // Build scrollable popup with all riders

@@ -4,6 +4,7 @@ import RegistryCard from '../components/RegistryCard.astro';
 import StatsBar from '../components/StatsBar.astro';
 import MapSection from '../components/MapSection.astro';
 import { supabaseAdmin } from '../lib/supabase';
+import stickerCustomers from '../data/sticker-customers.json';
 
 export const prerender = false;
 
@@ -18,19 +19,41 @@ const { data: submissions } = await supabaseAdmin
 
 const riders = submissions ?? [];
 
-// Compute stats
+// Normalize country names (handle Chinese/variant names)
+const countryNormalize: Record<string, string> = {
+  '中国': 'China', '日本': 'Japan', '韩国': 'South Korea',
+  '德国': 'Germany', '法国': 'France', '瑞士': 'Switzerland',
+  '加拿大': 'Canada', '澳大利亚': 'Australia', '新加坡': 'Singapore',
+};
+function normalizeCountry(c: string): string {
+  return countryNormalize[c] || c;
+}
+
+// Compute stats (riders + sticker customers, deduplicated)
+const riderCountries = riders.map(r => normalizeCountry(r.location.split(',').pop()?.trim() || '')).filter(Boolean);
+const customerCountries = stickerCustomers.map(c => c.country);
+const countries = new Set([...riderCountries, ...customerCountries]).size;
+
+const riderCities = riders.map(r => r.location.split(',')[0]?.trim().toLowerCase()).filter(Boolean);
+const customerCities = stickerCustomers.map(c => c.city.toLowerCase());
+const cities = new Set([...riderCities, ...customerCities]).size;
+
 const totalRiders = riders.length;
-const countries = new Set(riders.map(r => r.location.split(',').pop()?.trim()).filter(Boolean)).size;
-const cities = new Set(riders.map(r => r.location.split(',')[0]?.trim()).filter(Boolean)).size;
 
 function photoUrl(path: string): string {
   return `${supabaseUrl}/storage/v1/object/public/rider-photos/${path}`;
 }
 
-// Riders with coordinates for the map
-const mapRiders = riders
-  .filter(r => r.latitude && r.longitude)
-  .map(r => ({
+// Group riders by city for map markers
+const ridersByCity = new Map<string, Array<{
+  lat: number; lng: number; name: string; tkid: string;
+  photo: string; location: string; message: string;
+}>>();
+
+riders.filter(r => r.latitude && r.longitude).forEach(r => {
+  const city = r.location.split(',')[0]?.trim().toLowerCase() || 'unknown';
+  if (!ridersByCity.has(city)) ridersByCity.set(city, []);
+  ridersByCity.get(city)!.push({
     lat: r.latitude,
     lng: r.longitude,
     name: r.rider_name,
@@ -38,7 +61,19 @@ const mapRiders = riders
     photo: photoUrl(r.photo_path),
     location: r.location,
     message: r.message || '',
-  }));
+  });
+});
+
+// One marker per city, each containing all riders in that city
+const mapMarkers = Array.from(ridersByCity.values()).map(group => ({
+  lat: group[0].lat,
+  lng: group[0].lng,
+  riders: group,
+}));
+
+// Filter out customers whose city already has a rider (duck takes precedence)
+const riderCitySet = new Set(riderCities);
+const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLowerCase()));
 ---
 
 <Layout title="TRACKID — The Dove Became a Duck" description="TRACKID is a Beijing-based fixed gear brand. Browse the rider gallery, spot the roast duck sticker on steel frames worldwide, and join the flock." ogType="website">
@@ -66,7 +101,7 @@ const mapRiders = riders
 
     <StatsBar totalRiders={totalRiders} countries={countries} cities={cities} />
 
-    {mapRiders.length > 0 && <MapSection riders={mapRiders} />}
+    {(mapMarkers.length > 0 || mapCustomers.length > 0) && <MapSection markers={mapMarkers} customers={mapCustomers} />}
 
     {riders.length === 0 ? (
       <p style="color: var(--muted); margin-top: 32px;">No ducks spotted yet. <a href="/upload" style="color: var(--signal-red);">Be the first.</a></p>
@@ -89,7 +124,7 @@ const mapRiders = riders
   <div class="lightbox-overlay" id="lightbox" style="display: none;">
     <button class="lightbox-close" id="lightbox-close" aria-label="Close">&times;</button>
     <div class="lightbox-content">
-      <img class="lightbox-img" id="lightbox-img" src="" alt="" />
+      <img class="lightbox-img" id="lightbox-img" src="" alt="Rider photo" />
       <div class="lightbox-info">
         <div class="lightbox-tkid" id="lightbox-tkid"></div>
         <div class="lightbox-rider" id="lightbox-rider"></div>
@@ -204,7 +239,7 @@ const mapRiders = riders
     card.addEventListener('click', () => {
       const el = card as HTMLElement;
       lbImg.src = el.dataset.photo || '';
-      lbImg.alt = el.dataset.rider || '';
+      lbImg.alt = `${el.dataset.rider || 'Rider'}'s TRACKID duck spotted in ${el.dataset.location || 'unknown location'}`;
       lbTkid.textContent = el.dataset.tkid || '';
       lbRider.textContent = el.dataset.rider || '';
       lbLoc.textContent = el.dataset.location || '';

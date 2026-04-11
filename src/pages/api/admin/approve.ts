@@ -32,19 +32,41 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     .eq('id', id)
     .single();
 
-  // Geocode location (fire-and-forget, non-blocking)
+  // Geocode location
   let latitude: number | null = null;
   let longitude: number | null = null;
+  let normalizedLocation = submission?.location || '';
   if (submission?.location) {
     try {
-      const geoRes = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(submission.location)}&format=json&limit=1`,
-        { headers: { 'User-Agent': 'TRACKID-Gallery/1.0' } }
-      );
-      const geoData = await geoRes.json();
+      // Normalize separators: "BD / Poland" → "BD, Poland"
+      const cleanLocation = submission.location.replace(/\s*\/\s*/g, ', ').replace(/\s*-\s*/g, ', ');
+
+      async function tryGeocode(query: string) {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&addressdetails=1&accept-language=en`,
+          { headers: { 'User-Agent': 'TRACKID-Gallery/1.0' } }
+        );
+        return res.json();
+      }
+
+      // Try original (cleaned), then parts separately if it fails
+      let geoData = await tryGeocode(cleanLocation);
+      if (!geoData?.[0] && cleanLocation.includes(',')) {
+        // Try just the last part (country/region)
+        const parts = cleanLocation.split(',').map((s: string) => s.trim());
+        geoData = await tryGeocode(parts[parts.length - 1]);
+      }
+
       if (geoData?.[0]) {
         latitude = parseFloat(geoData[0].lat);
         longitude = parseFloat(geoData[0].lon);
+        // Build normalized "City, Country" in English
+        const addr = geoData[0].address;
+        const city = addr?.city || addr?.town || addr?.village || addr?.county || cleanLocation.split(',')[0].trim();
+        const country = addr?.country;
+        if (country) {
+          normalizedLocation = `${city}, ${country}`;
+        }
       }
     } catch (err) {
       console.error('Geocoding error:', err);
@@ -57,6 +79,7 @@ export const POST: APIRoute = async ({ request, redirect }) => {
       status: 'approved',
       registry_id: nextId,
       reviewed_at: new Date().toISOString(),
+      location: normalizedLocation,
       ...(latitude !== null && { latitude }),
       ...(longitude !== null && { longitude }),
     })

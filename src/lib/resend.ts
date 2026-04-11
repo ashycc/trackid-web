@@ -68,6 +68,7 @@ export async function sendApprovalEmail(
           <div style="font-family: monospace; font-size: 11px; color: #D4213D; letter-spacing: 1px;">${tkid}</div>
           <div style="font-size: 13px; font-weight: 500; margin-top: 4px;">${riderName}</div>
         </div>
+        <a href="https://trackidriders.com" style="display: inline-block; background: #D4213D; color: #fff; padding: 10px 24px; font-family: monospace; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; text-decoration: none;">View The Flock</a>
         <div style="font-size: 11px; color: #8A8279; letter-spacing: 1px; text-transform: uppercase; margin-top: 32px;">
           &copy; ${new Date().getFullYear()} TRACKID Registry
         </div>

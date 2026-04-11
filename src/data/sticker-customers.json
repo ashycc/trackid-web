@@ -1,0 +1,248 @@
+[
+  {
+    "city": "Berlin",
+    "country": "Germany",
+    "lat": 52.5191,
+    "lng": 13.3923
+  },
+  {
+    "city": "Bochum",
+    "country": "Germany",
+    "lat": 51.489,
+    "lng": 7.2232
+  },
+  {
+    "city": "Hildesheim",
+    "country": "Germany",
+    "lat": 52.1608,
+    "lng": 9.9572
+  },
+  {
+    "city": "Dortmund",
+    "country": "Germany",
+    "lat": 51.5171,
+    "lng": 7.4644
+  },
+  {
+    "city": "Karlsruhe",
+    "country": "Germany",
+    "lat": 49.0133,
+    "lng": 8.4115
+  },
+  {
+    "city": "Goettingen",
+    "country": "Germany",
+    "lat": 51.5411,
+    "lng": 9.9352
+  },
+  {
+    "city": "Muenchen",
+    "country": "Germany",
+    "lat": 48.1336,
+    "lng": 11.5743
+  },
+  {
+    "city": "Braunschweig",
+    "country": "Germany",
+    "lat": 52.2604,
+    "lng": 10.53
+  },
+  {
+    "city": "Freiburg",
+    "country": "Germany",
+    "lat": 47.9863,
+    "lng": 7.8505
+  },
+  {
+    "city": "Matsudo",
+    "country": "Japan",
+    "lat": 35.7948,
+    "lng": 139.913
+  },
+  {
+    "city": "Chiba",
+    "country": "Japan",
+    "lat": 35.6601,
+    "lng": 140.0565
+  },
+  {
+    "city": "matsusaka",
+    "country": "Japan",
+    "lat": 34.5715,
+    "lng": 136.5202
+  },
+  {
+    "city": "Iruma",
+    "country": "Japan",
+    "lat": 35.8281,
+    "lng": 139.3986
+  },
+  {
+    "city": "Yokohama",
+    "country": "Japan",
+    "lat": 35.5228,
+    "lng": 139.6408
+  },
+  {
+    "city": "Tsukuba",
+    "country": "Japan",
+    "lat": 36.0757,
+    "lng": 140.0677
+  },
+  {
+    "city": "Yokosuka",
+    "country": "Japan",
+    "lat": 35.2877,
+    "lng": 139.6655
+  },
+  {
+    "city": "Gwangmyeong",
+    "country": "South Korea",
+    "lat": 37.4786,
+    "lng": 126.8693
+  },
+  {
+    "city": "Dalseong",
+    "country": "South Korea",
+    "lat": 35.7715,
+    "lng": 128.429
+  },
+  {
+    "city": "Seoul",
+    "country": "South Korea",
+    "lat": 37.5123,
+    "lng": 126.9399
+  },
+  {
+    "city": "Daegu",
+    "country": "South Korea",
+    "lat": 35.8802,
+    "lng": 128.5828
+  },
+  {
+    "city": "Oise",
+    "country": "France",
+    "lat": 49.404,
+    "lng": 2.4055
+  },
+  {
+    "city": "Nantes",
+    "country": "France",
+    "lat": 47.2243,
+    "lng": -1.5445
+  },
+  {
+    "city": "Saint-Nazaire",
+    "country": "France",
+    "lat": 47.2755,
+    "lng": -2.2224
+  },
+  {
+    "city": "Allschwil",
+    "country": "Switzerland",
+    "lat": 47.552,
+    "lng": 7.5424
+  },
+  {
+    "city": "Fribourg",
+    "country": "Switzerland",
+    "lat": 46.6719,
+    "lng": 7.0933
+  },
+  {
+    "city": "Obfelden",
+    "country": "Switzerland",
+    "lat": 47.264,
+    "lng": 8.4148
+  },
+  {
+    "city": "Vancouver",
+    "country": "Canada",
+    "lat": 49.2595,
+    "lng": -123.1208
+  },
+  {
+    "city": "Victoria",
+    "country": "Canada",
+    "lat": 48.4374,
+    "lng": -123.3551
+  },
+  {
+    "city": "Bilbao",
+    "country": "Spain",
+    "lat": 43.2537,
+    "lng": -2.942
+  },
+  {
+    "city": "Barcelona",
+    "country": "Spain",
+    "lat": 41.3913,
+    "lng": 2.1741
+  },
+  {
+    "city": "Anvers",
+    "country": "Belgium",
+    "lat": 51.2247,
+    "lng": 4.3955
+  },
+  {
+    "city": "diepenbeek",
+    "country": "Belgium",
+    "lat": 50.9115,
+    "lng": 5.4224
+  },
+  {
+    "city": "Dandenong",
+    "country": "Australia",
+    "lat": -37.99,
+    "lng": 145.2011
+  },
+  {
+    "city": "Brzeg Dolny",
+    "country": "Poland",
+    "lat": 51.2753,
+    "lng": 16.6992
+  },
+  {
+    "city": "Singapore",
+    "country": "Singapore",
+    "lat": 1.3501,
+    "lng": 103.8106
+  },
+  {
+    "city": "Kotka",
+    "country": "Finland",
+    "lat": 60.474,
+    "lng": 26.9366
+  },
+  {
+    "city": "Csakbereny",
+    "country": "Hungary",
+    "lat": 47.3401,
+    "lng": 18.3289
+  },
+  {
+    "city": "Santiago",
+    "country": "Chile",
+    "lat": -33.4464,
+    "lng": -70.6601
+  },
+  {
+    "city": "Tilburg",
+    "country": "Netherlands",
+    "lat": 51.5927,
+    "lng": 5.0689
+  },
+  {
+    "city": "Amsterdam",
+    "country": "Netherlands",
+    "lat": 52.3717,
+    "lng": 4.9021
+  },
+  {
+    "city": "Lisboa",
+    "country": "Portugal",
+    "lat": 38.698,
+    "lng": -9.1357
+  }
+]

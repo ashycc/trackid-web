@@ -1,7 +1,5 @@
 ---
 interface Rider {
-  lat: number;
-  lng: number;
   name: string;
   tkid: string;
   photo: string;
@@ -9,32 +7,48 @@ interface Rider {
   message: string;
 }
 
-interface Props {
+interface Marker {
+  lat: number;
+  lng: number;
   riders: Rider[];
 }
 
-const { riders } = Astro.props;
+interface Customer {
+  lat: number;
+  lng: number;
+  city: string;
+  country: string;
+}
+
+interface Props {
+  markers: Marker[];
+  customers?: Customer[];
+}
+
+const { markers, customers = [] } = Astro.props;
 ---
 
 <div class="map-container notranslate" translate="no">
-  <div id="map" style="height: 400px; width: 100%; background: var(--surface); border: 1px solid var(--weld);"></div>
+  <div id="map" role="img" aria-label="World map showing TRACKID duck sticker sightings across cities and countries" style="height: 400px; width: 100%; background: var(--surface); border: 1px solid var(--weld);"></div>
 </div>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-<script is:inline define:vars={{ riders }}>
-  // Load Leaflet from CDN
-  const script = document.createElement('script');
+<script is:inline define:vars={{ markers, customers }}>
+  var script = document.createElement('script');
   script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-  script.onload = () => {
-    const map = L.map('map', {
+  script.onload = function() {
+    var map = L.map('map', {
       scrollWheelZoom: false,
+      touchZoom: true,
+      zoomSnap: 0.25,
+      zoomDelta: 0.5,
+      wheelDebounceTime: 80,
       attributionControl: false,
     }).setView([30, 0], 2);
 
     L.control.attribution({ prefix: '<a href="https://leafletjs.com">Leaflet</a>' }).addTo(map);
 
-    // Pick tile style based on current theme
     var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     var tileStyle = isDark ? 'dark_nolabels' : 'light_nolabels';
     var tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/' + tileStyle + '/{z}/{x}/{y}{r}.png', {
@@ -42,7 +56,6 @@ const { riders } = Astro.props;
       maxZoom: 18,
     }).addTo(map);
 
-    // Swap tiles when theme changes
     var observer = new MutationObserver(function() {
       var dark = document.documentElement.getAttribute('data-theme') === 'dark';
       var style = dark ? 'dark_nolabels' : 'light_nolabels';
@@ -50,36 +63,90 @@ const { riders } = Astro.props;
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
-    // Signal Red markers
-    const redIcon = L.divIcon({
+    // Customer markers (pulse dot)
+    var dotIcon = L.divIcon({
       className: 'trackid-marker',
-      html: '<div style="width:12px;height:12px;background:#D4213D;border:2px solid #0D0D0D;border-radius:0;"></div>',
-      iconSize: [12, 12],
-      iconAnchor: [6, 6],
+      html: '<div class="pulse-dot"></div>',
+      iconSize: [8, 8],
+      iconAnchor: [4, 4],
     });
 
-    riders.forEach((r) => {
-      const msgHtml = r.message ? `<div style="font-size:12px;color:#8A8279;margin-top:6px;line-height:1.4;font-style:italic;">"${r.message}"</div>` : '';
-      L.marker([r.lat, r.lng], { icon: redIcon })
+    customers.forEach(function(c) {
+      L.marker([c.lat, c.lng], { icon: dotIcon })
         .bindPopup(
-          `<div style="min-width:180px;">` +
-            `<img src="${r.photo}" style="width:100%;height:120px;object-fit:cover;display:block;" />` +
-            `<div style="padding:8px 4px 4px;">` +
-              `<div style="font-family:monospace;color:#D4213D;font-size:11px;letter-spacing:1px;">${r.tkid}</div>` +
-              `<div style="font-weight:500;font-size:13px;margin-top:2px;">${r.name}</div>` +
-              `<div style="font-family:monospace;font-size:11px;color:#8A8279;margin-top:2px;">${r.location}</div>` +
-              msgHtml +
-            `</div>` +
-          `</div>`,
-          { maxWidth: 220, minWidth: 180, className: 'trackid-popup' }
+          '<div style="padding:8px 10px;">' +
+            '<div style="font-family:monospace;font-size:11px;color:#D4213D;letter-spacing:1px;">STICKER SPOTTED</div>' +
+            '<div style="font-family:monospace;font-size:12px;color:#8A8279;margin-top:4px;">' + c.city + ', ' + c.country + '</div>' +
+          '</div>',
+          { maxWidth: 200, className: 'trackid-popup' }
         )
         .addTo(map);
     });
 
-    if (riders.length > 0) {
-      const bounds = L.latLngBounds(riders.map((r) => [r.lat, r.lng]));
+    // Rider markers — grouped by city
+    markers.forEach(function(m) {
+      var count = m.riders.length;
+
+      // Stacked ducks for multi-rider cities
+      var iconHtml;
+      if (count === 1) {
+        iconHtml = '<div style="font-size:20px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3));">🦆</div>';
+      } else {
+        iconHtml = '<div style="position:relative;width:32px;height:28px;">';
+        for (var i = 0; i < Math.min(count, 3); i++) {
+          iconHtml += '<div style="position:absolute;font-size:16px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3));left:' + (i * 6) + 'px;top:' + (i * 4) + 'px;">🦆</div>';
+        }
+        iconHtml += '</div>';
+      }
+
+      var duckIcon = L.divIcon({
+        className: 'trackid-marker',
+        html: iconHtml,
+        iconSize: count > 1 ? [32, 28] : [24, 24],
+        iconAnchor: count > 1 ? [16, 14] : [12, 12],
+      });
+
+      // Build scrollable popup with all riders
+      var popupHtml = '<div style="max-height:280px;overflow-y:auto;min-width:180px;">';
+      m.riders.forEach(function(r, idx) {
+        var msgHtml = r.message ? '<div style="font-size:12px;color:#8A8279;margin-top:6px;line-height:1.4;font-style:italic;">"' + r.message + '"</div>' : '';
+        if (idx > 0) popupHtml += '<div style="border-top:1px solid #ddd;"></div>';
+        popupHtml +=
+          '<div>' +
+            '<img src="' + r.photo + '" alt="' + r.name + '" style="width:100%;height:120px;object-fit:cover;display:block;" />' +
+            '<div style="padding:8px 4px 4px;">' +
+              '<div style="font-family:monospace;color:#D4213D;font-size:11px;letter-spacing:1px;">' + r.tkid + '</div>' +
+              '<div style="font-weight:500;font-size:13px;margin-top:2px;">' + r.name + '</div>' +
+              '<div style="font-family:monospace;font-size:11px;color:#8A8279;margin-top:2px;">' + r.location + '</div>' +
+              msgHtml +
+            '</div>' +
+          '</div>';
+      });
+      popupHtml += '</div>';
+
+      L.marker([m.lat, m.lng], { icon: duckIcon })
+        .bindPopup(popupHtml, { maxWidth: 220, minWidth: 180, className: 'trackid-popup' })
+        .addTo(map);
+    });
+
+    var allPoints = [
+      ...markers.map(function(m) { return [m.lat, m.lng]; }),
+      ...customers.map(function(c) { return [c.lat, c.lng]; }),
+    ];
+    if (allPoints.length > 0) {
+      var bounds = L.latLngBounds(allPoints);
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 6 });
     }
+
+    var mapEl = document.getElementById('map');
+    function fixTileAlts() {
+      mapEl.querySelectorAll('.leaflet-tile-container img:not([alt])').forEach(function(img) {
+        img.setAttribute('alt', '');
+        img.setAttribute('role', 'presentation');
+      });
+    }
+    fixTileAlts();
+    new MutationObserver(fixTileAlts).observe(mapEl, { childList: true, subtree: true });
   };
   document.head.appendChild(script);
 </script>
@@ -89,7 +156,6 @@ const { riders } = Astro.props;
     margin-top: 24px;
   }
 
-  /* Override Leaflet popup styles */
   .map-container :global(.leaflet-popup-content-wrapper) {
     border-radius: 0;
     font-family: 'IBM Plex Sans', sans-serif;
@@ -104,5 +170,20 @@ const { riders } = Astro.props;
 
   .map-container :global(.leaflet-popup-tip) {
     display: none;
+  }
+
+  .map-container :global(.pulse-dot) {
+    width: 6px;
+    height: 6px;
+    background: #E8820C;
+    border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(232, 130, 12, 0.6);
+    animation: pulse-ring 2s ease-out infinite;
+  }
+
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(232, 130, 12, 0.6); }
+    70% { box-shadow: 0 0 0 8px rgba(232, 130, 12, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(232, 130, 12, 0); }
   }
 </style>

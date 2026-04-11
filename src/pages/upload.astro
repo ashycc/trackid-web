@@ -27,7 +27,7 @@ const hcaptchaSiteKey = import.meta.env.PUBLIC_HCAPTCHA_SITE_KEY || '';
           <div class="dropzone-icon">&#x2191;</div>
           <div class="dropzone-text">Drop your photo here or click to browse</div>
           <div class="dropzone-preview" id="preview" style="display: none;"></div>
-          <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/webp" style="display: none;" />
+          <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/webp" style="position: absolute; width: 0; height: 0; opacity: 0; overflow: hidden;" />
         </div>
       </div>
 

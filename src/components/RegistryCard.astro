@@ -29,5 +29,6 @@ const tkid = `TKID-${String(registryId).padStart(4, '0')}`;
     <div class="card-id">{tkid}</div>
     <div class="card-rider">{riderName}</div>
     <div class="card-loc">{location}</div>
+    {message && <div class="card-msg">"{message}"</div>}
   </div>
 </article>

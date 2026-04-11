@@ -40,13 +40,13 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     const photo = formData.get('photo') as File | null;
     const riderName = (formData.get('rider_name') as string)?.trim();
     const location = (formData.get('location') as string)?.trim();
-    const email = (formData.get('email') as string)?.trim() || null;
+    const email = (formData.get('email') as string)?.trim();
     const message = (formData.get('message') as string)?.trim() || null;
     const captchaToken = (formData.get('h-captcha-response') as string)?.trim();
 
     // Validate required fields
-    if (!photo || !riderName || !location) {
-      return json({ error: 'Photo, name, and location are required.' }, 400);
+    if (!photo || !riderName || !location || !email) {
+      return json({ error: 'Photo, name, location, and email are required.' }, 400);
     }
 
     // Validate file type

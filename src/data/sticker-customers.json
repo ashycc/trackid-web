@@ -244,5 +244,65 @@
     "country": "Portugal",
     "lat": 38.698,
     "lng": -9.1357
+  },
+  {
+    "city": "Higashiyamato",
+    "country": "Japan",
+    "lat": 35.7454,
+    "lng": 139.4265
+  },
+  {
+    "city": "Bobigny",
+    "country": "France",
+    "lat": 48.9066,
+    "lng": 2.4399
+  },
+  {
+    "city": "Sapporo",
+    "country": "Japan",
+    "lat": 43.0618,
+    "lng": 141.3545
+  },
+  {
+    "city": "Eindhoven",
+    "country": "Netherlands",
+    "lat": 51.4416,
+    "lng": 5.4697
+  },
+  {
+    "city": "Pinneberg",
+    "country": "Germany",
+    "lat": 53.6553,
+    "lng": 9.7996
+  },
+  {
+    "city": "Nagoya",
+    "country": "Japan",
+    "lat": 35.1815,
+    "lng": 136.9066
+  },
+  {
+    "city": "Marin",
+    "country": "France",
+    "lat": 46.3469,
+    "lng": 6.5186
+  },
+  {
+    "city": "Ceret",
+    "country": "France",
+    "lat": 42.4871,
+    "lng": 2.7486
+  },
+  {
+    "city": "Kochi",
+    "country": "Japan",
+    "lat": 33.5597,
+    "lng": 133.5311
+  },
+  {
+    "city": "Montreal",
+    "country": "Canada",
+    "lat": 45.5017,
+    "lng": -73.5673
   }
 ]

@@ -271,6 +271,42 @@ const hcaptchaSiteKey = import.meta.env.PUBLIC_HCAPTCHA_SITE_KEY || '';
   const MAX_SIZE = 10 * 1024 * 1024;
   const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
+  // 压缩参数：长边 2000px、JPEG 0.85,目标 ~1.5MB/张
+  // 让 3 张合计远小于 Vercel 4.5MB body 上限,同时加快跨洋上行
+  const MAX_EDGE = 2000;
+  const JPEG_QUALITY = 0.85;
+  const UPLOAD_TIMEOUT_MS = 120000;
+
+  async function compressImage(file: File): Promise<File> {
+    // PNG 透明保留为 PNG;其余一律转 JPEG(体积小得多)
+    const targetType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+    const bitmap = await createImageBitmap(file).catch(() => null);
+    if (!bitmap) return file;
+
+    let { width, height } = bitmap;
+    if (Math.max(width, height) > MAX_EDGE) {
+      const scale = MAX_EDGE / Math.max(width, height);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { bitmap.close?.(); return file; }
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close?.();
+
+    const blob: Blob | null = await new Promise((resolve) =>
+      canvas.toBlob(resolve, targetType, JPEG_QUALITY)
+    );
+    if (!blob || blob.size >= file.size) return file; // 压缩无收益则用原图
+    const ext = targetType === 'image/png' ? 'png' : 'jpg';
+    const baseName = file.name.replace(/\.[^.]+$/, '') || 'photo';
+    return new File([blob], `${baseName}.${ext}`, { type: targetType });
+  }
+
   const form = document.getElementById('upload-form') as HTMLFormElement;
   const dropzone = document.getElementById('dropzone')!;
   const fileInput = document.getElementById('photo') as HTMLInputElement;
@@ -477,28 +513,54 @@ const hcaptchaSiteKey = import.meta.env.PUBLIC_HCAPTCHA_SITE_KEY || '';
     }
 
     submitBtn.disabled = true;
+    submitBtn.textContent = 'COMPRESSING...';
+
+    let compressed: File[];
+    try {
+      compressed = await Promise.all(selected.map((f) => compressImage(f)));
+    } catch {
+      showAlert('error', 'Could not process one of your photos. Try a different image.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'SEND THE DUCK 🦆';
+      return;
+    }
+
     submitBtn.textContent = 'SUBMITTING...';
 
     const formData = new FormData(form);
     // Replace any auto-collected photos with our managed list (ensures order + dedupe)
     formData.delete('photos');
-    selected.forEach((f) => formData.append('photos', f));
+    compressed.forEach((f) => formData.append('photos', f));
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
 
     try {
-      const res = await fetch('/api/submit', { method: 'POST', body: formData });
-      const data = await res.json();
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+      const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
         form.reset();
         selected = [];
         renderPreviews();
         modal.style.display = 'flex';
+      } else if (res.status === 413) {
+        showAlert('error', 'Photos are too large. Try fewer or smaller images.');
       } else {
-        showAlert('error', data.error || 'Something went wrong. Please try again.');
+        showAlert('error', data.error || `Upload failed (${res.status}). Please try again.`);
       }
-    } catch {
-      showAlert('error', 'Network error. Please try again.');
+    } catch (err) {
+      if ((err as Error)?.name === 'AbortError') {
+        showAlert('error', 'Upload timed out. Check your connection and try again.');
+      } else {
+        showAlert('error', 'Network error. Please try again.');
+      }
     } finally {
+      window.clearTimeout(timeoutId);
       submitBtn.disabled = false;
       submitBtn.textContent = 'SEND THE DUCK 🦆';
     }

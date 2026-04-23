@@ -115,18 +115,29 @@ function photoUrl(path: string): string {
                   {new Date(s.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                 </div>
 
-                {currentStatus === 'pending' && (
-                  <div class="admin-actions">
+                <div class="admin-actions">
+                  {currentStatus !== 'approved' && (
                     <form method="POST" action="/api/admin/approve">
                       <input type="hidden" name="id" value={s.id} />
+                      <input type="hidden" name="status" value={currentStatus} />
                       <button type="submit" class="btn btn-primary" style="padding: 8px 16px;">Approve</button>
                     </form>
+                  )}
+                  {currentStatus !== 'approved' && (
                     <form method="POST" action="/api/admin/reject">
                       <input type="hidden" name="id" value={s.id} />
+                      <input type="hidden" name="status" value={currentStatus} />
                       <button type="submit" class="btn btn-ghost" style="padding: 8px 16px;">Reject</button>
                     </form>
-                  </div>
-                )}
+                  )}
+                  {currentStatus !== 'pending' && (
+                    <form method="POST" action="/api/admin/delete" class="admin-delete-form">
+                      <input type="hidden" name="id" value={s.id} />
+                      <input type="hidden" name="status" value={currentStatus} />
+                      <button type="submit" class="btn btn-ghost admin-delete-btn" style="padding: 8px 16px;">Delete</button>
+                    </form>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -135,6 +146,17 @@ function photoUrl(path: string): string {
     )}
   </section>
 </Layout>
+
+<script is:inline>
+  document.addEventListener('submit', (e) => {
+    const form = e.target;
+    if (form instanceof HTMLFormElement && form.classList.contains('admin-delete-form')) {
+      if (!confirm('Delete this submission permanently? Photos will be removed from storage and cannot be recovered.')) {
+        e.preventDefault();
+      }
+    }
+  });
+</script>
 
 <style>
   .admin-tabs {
@@ -254,7 +276,22 @@ function photoUrl(path: string): string {
 
   .admin-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin-top: 12px;
+  }
+
+  .admin-delete-form {
+    margin: 0;
+  }
+
+  .admin-delete-btn {
+    color: var(--signal-red);
+    border-color: var(--signal-red);
+  }
+
+  .admin-delete-btn:hover {
+    background: var(--signal-red);
+    color: #fff;
   }
 </style>

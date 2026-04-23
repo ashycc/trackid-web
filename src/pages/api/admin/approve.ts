@@ -13,7 +13,8 @@ export const POST: APIRoute = async ({ request, redirect }) => {
 
   const formData = await request.formData();
   const id = formData.get('id') as string;
-  if (!id) return redirect('/admin?error=missing_id');
+  const returnStatus = (formData.get('status') as string) || 'pending';
+  if (!id) return redirect(`/admin?status=${returnStatus}&error=missing_id`);
 
   // Get next TKID number (MAX + 1, safe for single-admin)
   const { data: maxData } = await supabaseAdmin
@@ -87,7 +88,7 @@ export const POST: APIRoute = async ({ request, redirect }) => {
 
   if (error) {
     console.error('Approve error:', error);
-    return redirect('/admin?error=approve_failed');
+    return redirect(`/admin?status=${returnStatus}&error=approve_failed`);
   }
 
   const approved = submission;
@@ -98,5 +99,5 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     );
   }
 
-  return redirect('/admin');
+  return redirect(`/admin?status=${returnStatus}`);
 };

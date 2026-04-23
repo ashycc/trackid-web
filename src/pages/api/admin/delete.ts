@@ -15,17 +15,25 @@ export const POST: APIRoute = async ({ request, redirect }) => {
   const returnStatus = (formData.get('status') as string) || 'pending';
   if (!id) return redirect(`/admin?status=${returnStatus}&error=missing_id`);
 
+  const { data: submission } = await supabaseAdmin
+    .from('submissions')
+    .select('photo_paths')
+    .eq('id', id)
+    .single();
+
   const { error } = await supabaseAdmin
     .from('submissions')
-    .update({
-      status: 'rejected',
-      reviewed_at: new Date().toISOString(),
-    })
+    .delete()
     .eq('id', id);
 
   if (error) {
-    console.error('Reject error:', error);
-    return redirect(`/admin?status=${returnStatus}&error=reject_failed`);
+    console.error('Delete error:', error);
+    return redirect(`/admin?status=${returnStatus}&error=delete_failed`);
+  }
+
+  const paths = (submission?.photo_paths ?? []) as string[];
+  if (paths.length > 0) {
+    await supabaseAdmin.storage.from('rider-photos').remove(paths);
   }
 
   return redirect(`/admin?status=${returnStatus}`);

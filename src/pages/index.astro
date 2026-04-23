@@ -44,6 +44,25 @@ function photoUrl(path: string): string {
   return `${supabaseUrl}/storage/v1/object/public/rider-photos/${path}`;
 }
 
+function coverPath(r: { photo_paths?: string[] | null; cover_index?: number | null }): string {
+  const paths = Array.isArray(r.photo_paths) ? r.photo_paths : [];
+  if (paths.length === 0) return '';
+  const idx = typeof r.cover_index === 'number' && r.cover_index >= 0 && r.cover_index < paths.length
+    ? r.cover_index
+    : 0;
+  return paths[idx];
+}
+
+// Ordered photo URLs with the cover first, then the rest in original order.
+function orderedPhotoUrls(r: { photo_paths?: string[] | null; cover_index?: number | null }): string[] {
+  const paths = Array.isArray(r.photo_paths) ? r.photo_paths : [];
+  if (paths.length === 0) return [];
+  const idx = typeof r.cover_index === 'number' && r.cover_index >= 0 && r.cover_index < paths.length
+    ? r.cover_index
+    : 0;
+  return [paths[idx], ...paths.filter((_, i) => i !== idx)].map(photoUrl);
+}
+
 // Group riders by city for map markers
 const ridersByCity = new Map<string, Array<{
   lat: number; lng: number; name: string; tkid: string;
@@ -58,7 +77,7 @@ riders.filter(r => r.latitude && r.longitude).forEach(r => {
     lng: r.longitude,
     name: r.rider_name,
     tkid: `TKID-${String(r.registry_id).padStart(4, '0')}`,
-    photo: photoUrl(r.photo_path),
+    photo: photoUrl(coverPath(r)),
     location: r.location,
     message: r.message || '',
   });
@@ -112,7 +131,8 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
             registryId={rider.registry_id}
             riderName={rider.rider_name}
             location={rider.location}
-            photoUrl={photoUrl(rider.photo_path)}
+            photoUrl={photoUrl(coverPath(rider))}
+            photoUrls={orderedPhotoUrls(rider)}
             message={rider.message}
           />
         ))}
@@ -124,7 +144,12 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
   <div class="lightbox-overlay" id="lightbox" style="display: none;">
     <button class="lightbox-close" id="lightbox-close" aria-label="Close">&times;</button>
     <div class="lightbox-content">
-      <img class="lightbox-img" id="lightbox-img" src="" alt="Rider photo" />
+      <div class="lightbox-img-wrap">
+        <img class="lightbox-img" id="lightbox-img" src="" alt="Rider photo" />
+        <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Previous photo">&lsaquo;</button>
+        <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Next photo">&rsaquo;</button>
+        <div class="lightbox-counter" id="lightbox-counter"></div>
+      </div>
       <div class="lightbox-info">
         <div class="lightbox-tkid" id="lightbox-tkid"></div>
         <div class="lightbox-rider" id="lightbox-rider"></div>
@@ -181,12 +206,67 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
     overflow: hidden;
   }
 
+  .lightbox-img-wrap {
+    position: relative;
+  }
+
   .lightbox-img {
     width: 100%;
     max-height: 60vh;
     object-fit: contain;
     display: block;
     background: #000;
+  }
+
+  .lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 32px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, opacity 0.15s ease;
+    user-select: none;
+  }
+
+  .lightbox-nav:hover {
+    background: var(--signal-red);
+  }
+
+  .lightbox-nav[hidden] {
+    display: none;
+  }
+
+  .lightbox-prev {
+    left: 8px;
+  }
+
+  .lightbox-next {
+    right: 8px;
+  }
+
+  .lightbox-counter {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+    padding: 3px 8px;
+  }
+
+  .lightbox-counter[hidden] {
+    display: none;
   }
 
   .lightbox-info {
@@ -234,30 +314,78 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
   const lbLoc = document.getElementById('lightbox-loc')!;
   const lbMsg = document.getElementById('lightbox-msg')!;
   const lbClose = document.getElementById('lightbox-close')!;
+  const lbPrev = document.getElementById('lightbox-prev') as HTMLButtonElement;
+  const lbNext = document.getElementById('lightbox-next') as HTMLButtonElement;
+  const lbCounter = document.getElementById('lightbox-counter')!;
+
+  let photos: string[] = [];
+  let currentIndex = 0;
+  let currentRider = '';
+  let currentLocation = '';
+
+  function parsePhotos(raw: string | undefined, fallback: string): string[] {
+    if (raw) {
+      try {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr) && arr.length > 0) return arr.filter((s): s is string => typeof s === 'string' && s.length > 0);
+      } catch {}
+    }
+    return fallback ? [fallback] : [];
+  }
+
+  function render() {
+    if (photos.length === 0) return;
+    currentIndex = ((currentIndex % photos.length) + photos.length) % photos.length;
+    lbImg.src = photos[currentIndex];
+    lbImg.alt = `${currentRider || 'Rider'}'s TRACKID duck spotted in ${currentLocation || 'unknown location'}`;
+
+    const multi = photos.length > 1;
+    lbPrev.hidden = !multi;
+    lbNext.hidden = !multi;
+    lbCounter.hidden = !multi;
+    if (multi) lbCounter.textContent = `${currentIndex + 1} / ${photos.length}`;
+  }
+
+  function openLightbox(el: HTMLElement) {
+    photos = parsePhotos(el.dataset.photos, el.dataset.photo || '');
+    currentIndex = 0;
+    currentRider = el.dataset.rider || '';
+    currentLocation = el.dataset.location || '';
+    lbTkid.textContent = el.dataset.tkid || '';
+    lbRider.textContent = currentRider;
+    lbLoc.textContent = currentLocation;
+    lbMsg.textContent = el.dataset.message || '';
+    render();
+    lightbox.style.display = 'flex';
+  }
+
+  function closeLightbox() {
+    lightbox.style.display = 'none';
+  }
+
+  function step(delta: number) {
+    if (photos.length < 2) return;
+    currentIndex += delta;
+    render();
+  }
 
   document.querySelectorAll('.registry-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const el = card as HTMLElement;
-      lbImg.src = el.dataset.photo || '';
-      lbImg.alt = `${el.dataset.rider || 'Rider'}'s TRACKID duck spotted in ${el.dataset.location || 'unknown location'}`;
-      lbTkid.textContent = el.dataset.tkid || '';
-      lbRider.textContent = el.dataset.rider || '';
-      lbLoc.textContent = el.dataset.location || '';
-      lbMsg.textContent = el.dataset.message || '';
-      lightbox.style.display = 'flex';
-    });
+    card.addEventListener('click', () => openLightbox(card as HTMLElement));
   });
 
-  lbClose.addEventListener('click', () => {
-    lightbox.style.display = 'none';
-  });
+  lbClose.addEventListener('click', closeLightbox);
+  lbPrev.addEventListener('click', (e) => { e.stopPropagation(); step(-1); });
+  lbNext.addEventListener('click', (e) => { e.stopPropagation(); step(1); });
 
   lightbox.addEventListener('click', (e) => {
-    if (e.target === lightbox) lightbox.style.display = 'none';
+    if (e.target === lightbox) closeLightbox();
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') lightbox.style.display = 'none';
+    if (lightbox.style.display === 'none') return;
+    if (e.key === 'Escape') closeLightbox();
+    else if (e.key === 'ArrowLeft') step(-1);
+    else if (e.key === 'ArrowRight') step(1);
   });
 </script>
 

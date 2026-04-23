@@ -4,16 +4,19 @@ interface Props {
   riderName: string;
   location: string;
   photoUrl?: string;
+  photoUrls?: string[];
   message?: string;
 }
 
-const { registryId, riderName, location, photoUrl, message } = Astro.props;
+const { registryId, riderName, location, photoUrl, photoUrls, message } = Astro.props;
 const tkid = `TKID-${String(registryId).padStart(4, '0')}`;
+const photos = (photoUrls && photoUrls.length > 0) ? photoUrls : (photoUrl ? [photoUrl] : []);
 ---
 
 <article
   class="registry-card"
   data-photo={photoUrl || ''}
+  data-photos={JSON.stringify(photos)}
   data-tkid={tkid}
   data-rider={riderName}
   data-location={location}

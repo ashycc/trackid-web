@@ -12,33 +12,35 @@ export const POST: APIRoute = async ({ request, redirect }) => {
 
   const formData = await request.formData();
   const id = formData.get('id') as string;
-  if (!id) return redirect('/admin?error=missing_id');
+  const indexRaw = formData.get('index') as string;
+  const returnStatus = (formData.get('status') as string) || 'pending';
 
-  // Get photo paths before rejecting (for cleanup)
+  const index = Number.parseInt(indexRaw, 10);
+  if (!id || Number.isNaN(index) || index < 0) {
+    return redirect(`/admin?status=${returnStatus}&error=bad_cover`);
+  }
+
+  // Validate index against actual array length
   const { data: submission } = await supabaseAdmin
     .from('submissions')
     .select('photo_paths')
     .eq('id', id)
     .single();
 
+  const paths = (submission?.photo_paths ?? []) as string[];
+  if (index >= paths.length) {
+    return redirect(`/admin?status=${returnStatus}&error=bad_cover`);
+  }
+
   const { error } = await supabaseAdmin
     .from('submissions')
-    .update({
-      status: 'rejected',
-      reviewed_at: new Date().toISOString(),
-    })
+    .update({ cover_index: index })
     .eq('id', id);
 
   if (error) {
-    console.error('Reject error:', error);
-    return redirect('/admin?error=reject_failed');
+    console.error('Set cover error:', error);
+    return redirect(`/admin?status=${returnStatus}&error=cover_failed`);
   }
 
-  // Clean up photos from storage
-  const paths = (submission?.photo_paths ?? []) as string[];
-  if (paths.length > 0) {
-    await supabaseAdmin.storage.from('rider-photos').remove(paths);
-  }
-
-  return redirect('/admin');
+  return redirect(`/admin?status=${returnStatus}`);
 };

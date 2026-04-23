@@ -5,7 +5,8 @@ import { randomUUID } from 'crypto';
 
 export const prerender = false;
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB per file
+const MAX_PHOTOS = 3;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const EXT_MAP: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -37,26 +38,33 @@ function json(body: object, status: number) {
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   try {
     const formData = await request.formData();
-    const photo = formData.get('photo') as File | null;
+    // Accept new `photos` field; fall back to legacy `photo` for safety.
+    const rawPhotos = [
+      ...formData.getAll('photos'),
+      ...formData.getAll('photo'),
+    ].filter((v): v is File => v instanceof File && v.size > 0);
+
     const riderName = (formData.get('rider_name') as string)?.trim();
     const location = (formData.get('location') as string)?.trim();
     const email = (formData.get('email') as string)?.trim();
     const message = (formData.get('message') as string)?.trim() || null;
     const captchaToken = (formData.get('h-captcha-response') as string)?.trim();
 
-    // Validate required fields
-    if (!photo || !riderName || !location || !email) {
+    if (rawPhotos.length === 0 || !riderName || !location || !email) {
       return json({ error: 'Photo, name, location, and email are required.' }, 400);
     }
 
-    // Validate file type
-    if (!ALLOWED_TYPES.includes(photo.type)) {
-      return json({ error: 'Only JPEG, PNG, and WebP images are accepted.' }, 400);
+    if (rawPhotos.length > MAX_PHOTOS) {
+      return json({ error: `Maximum ${MAX_PHOTOS} photos per submission.` }, 400);
     }
 
-    // Validate file size
-    if (photo.size > MAX_FILE_SIZE) {
-      return json({ error: 'File too large. Maximum size is 10MB.' }, 400);
+    for (const photo of rawPhotos) {
+      if (!ALLOWED_TYPES.includes(photo.type)) {
+        return json({ error: 'Only JPEG, PNG, and WebP images are accepted.' }, 400);
+      }
+      if (photo.size > MAX_FILE_SIZE) {
+        return json({ error: 'File too large. Maximum size is 10MB per photo.' }, 400);
+      }
     }
 
     // hCaptcha verification (mandatory when configured) or rate limit fallback
@@ -65,7 +73,6 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       if (!captchaToken) {
         return json({ error: 'Captcha verification required.' }, 400);
       }
-      // Verify hCaptcha token
       const verifyRes = await fetch('https://api.hcaptcha.com/siteverify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -76,31 +83,35 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         return json({ error: 'Captcha verification failed. Please try again.' }, 400);
       }
     } else {
-      // Fallback: IP rate limiting (only when hCaptcha is not configured)
       const ip = clientAddress || request.headers.get('x-forwarded-for') || 'unknown';
       if (!checkRateLimit(ip)) {
         return json({ error: 'Too many uploads. Please try again later.' }, 429);
       }
     }
 
-    // Upload photo to Supabase Storage
-    const ext = EXT_MAP[photo.type] || 'jpg';
-    const fileName = `uploads/${randomUUID()}.${ext}`;
-    const arrayBuffer = await photo.arrayBuffer();
+    // Upload each photo; track success so we can roll back on failure.
+    const uploadedPaths: string[] = [];
+    for (const photo of rawPhotos) {
+      const ext = EXT_MAP[photo.type] || 'jpg';
+      const fileName = `uploads/${randomUUID()}.${ext}`;
+      const arrayBuffer = await photo.arrayBuffer();
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from('rider-photos')
+        .upload(fileName, arrayBuffer, {
+          contentType: photo.type,
+          upsert: false,
+        });
 
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from('rider-photos')
-      .upload(fileName, arrayBuffer, {
-        contentType: photo.type,
-        upsert: false,
-      });
-
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
-      return json({ error: 'Failed to upload photo.' }, 500);
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        if (uploadedPaths.length > 0) {
+          await supabaseAdmin.storage.from('rider-photos').remove(uploadedPaths);
+        }
+        return json({ error: 'Failed to upload photo.' }, 500);
+      }
+      uploadedPaths.push(fileName);
     }
 
-    // Insert submission record
     const { error: dbError } = await supabaseAdmin
       .from('submissions')
       .insert({
@@ -108,17 +119,17 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         location,
         email,
         message,
-        photo_path: fileName,
+        photo_paths: uploadedPaths,
+        cover_index: 0,
         status: 'pending',
       });
 
     if (dbError) {
       console.error('DB error:', dbError);
-      await supabaseAdmin.storage.from('rider-photos').remove([fileName]);
+      await supabaseAdmin.storage.from('rider-photos').remove(uploadedPaths);
       return json({ error: 'Failed to save submission.' }, 500);
     }
 
-    // Notify admin (non-blocking)
     sendNewSubmissionNotification(riderName, location, message).catch(err =>
       console.error('Admin notification error:', err)
     );

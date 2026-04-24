@@ -9,7 +9,15 @@ function escapeHtml(s: string): string {
 
 export const resend = apiKey ? new Resend(apiKey) : null;
 
-const ADMIN_EMAIL = 'trackid_bj@126.com';
+// Comma-separated list; falls back to Gmail + 126 so a single provider outage
+// (e.g. 126 bouncing cross-border mail) doesn't drop the review notification.
+const ADMIN_EMAILS: string[] = (
+  import.meta.env.ADMIN_NOTIFICATION_EMAIL ||
+  'ashycc@gmail.com,trackid_bj@126.com'
+)
+  .split(',')
+  .map((s: string) => s.trim())
+  .filter(Boolean);
 
 export async function sendNewSubmissionNotification(
   riderName: string,
@@ -21,9 +29,9 @@ export async function sendNewSubmissionNotification(
     return;
   }
 
-  await resend.emails.send({
+  const { data, error } = await resend.emails.send({
     from: fromEmail,
-    to: ADMIN_EMAIL,
+    to: ADMIN_EMAILS,
     subject: `New duck submission — ${riderName} from ${location}`,
     html: `
       <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 24px; background: #ECE6DD; color: #0D0D0D;">
@@ -42,6 +50,12 @@ export async function sendNewSubmissionNotification(
       </div>
     `,
   });
+
+  if (error) {
+    console.error('[email] Admin notification failed:', error, 'to:', ADMIN_EMAILS, 'from:', fromEmail);
+    throw error;
+  }
+  console.log('[email] Admin notification sent:', data?.id, 'to:', ADMIN_EMAILS);
 }
 
 export async function sendApprovalEmail(

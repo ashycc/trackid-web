@@ -17,7 +17,7 @@ export const POST: APIRoute = async ({ request, redirect }) => {
 
   const { data: submission } = await supabaseAdmin
     .from('submissions')
-    .select('photo_paths')
+    .select('photo_paths, registry_id')
     .eq('id', id)
     .single();
 
@@ -29,6 +29,40 @@ export const POST: APIRoute = async ({ request, redirect }) => {
   if (error) {
     console.error('Delete error:', error);
     return redirect(`/admin?status=${returnStatus}&error=delete_failed`);
+  }
+
+  // If the deleted post had a TKID, shift every larger registry_id down by 1
+  // so the sequence stays contiguous. Must clear registry_id first to avoid
+  // the UNIQUE constraint colliding with the next slot while rows shift.
+  const deletedRid: number | null = submission?.registry_id ?? null;
+  if (typeof deletedRid === 'number') {
+    const { data: toShift, error: fetchErr } = await supabaseAdmin
+      .from('submissions')
+      .select('id, registry_id')
+      .gt('registry_id', deletedRid)
+      .order('registry_id', { ascending: true });
+
+    if (fetchErr) {
+      console.error('Renumber fetch error:', fetchErr);
+    } else if (toShift && toShift.length > 0) {
+      const ids = toShift.map((r) => r.id);
+      const { error: clearErr } = await supabaseAdmin
+        .from('submissions')
+        .update({ registry_id: null })
+        .in('id', ids);
+
+      if (clearErr) {
+        console.error('Renumber clear error:', clearErr);
+      } else {
+        for (const row of toShift) {
+          const { error: shiftErr } = await supabaseAdmin
+            .from('submissions')
+            .update({ registry_id: row.registry_id - 1 })
+            .eq('id', row.id);
+          if (shiftErr) console.error('Renumber shift error:', shiftErr);
+        }
+      }
+    }
   }
 
   const paths = (submission?.photo_paths ?? []) as string[];

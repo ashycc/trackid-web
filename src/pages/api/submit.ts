@@ -130,9 +130,11 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       return json({ error: 'Failed to save submission.' }, 500);
     }
 
-    sendNewSubmissionNotification(riderName, location, message).catch(err =>
-      console.error('Admin notification error:', err)
-    );
+    try {
+      await sendNewSubmissionNotification(riderName, location, message);
+    } catch (err) {
+      console.error('Admin notification error:', err);
+    }
 
     return json({ success: true }, 200);
   } catch (err) {

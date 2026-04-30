@@ -66,8 +66,9 @@ const { markers, customers = [] } = Astro.props;
     }));
 
     // Hide all label/symbol layers for a clean, label-free aesthetic.
-    // Re-runs on every style load since setStyle replaces all layers.
+    // Re-runs on every style change (initial load + setStyle on theme toggle).
     function hideLabels() {
+      if (!map.isStyleLoaded()) return;
       var layers = map.getStyle().layers || [];
       layers.forEach(function(layer) {
         if (layer.type === 'symbol') {
@@ -75,11 +76,16 @@ const { markers, customers = [] } = Astro.props;
         }
       });
     }
-    map.on('style.load', hideLabels);
+    map.on('styledata', hideLabels);
+    map.on('load', hideLabels);
 
     var observer = new MutationObserver(function() {
       var dark = document.documentElement.getAttribute('data-theme') === 'dark';
       map.setStyle(styleUrl(dark));
+      // Belt-and-suspenders: retry after style settles, in case styledata
+      // fires before all symbol layers are registered.
+      setTimeout(hideLabels, 200);
+      setTimeout(hideLabels, 800);
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 

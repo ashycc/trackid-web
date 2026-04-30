@@ -304,5 +304,41 @@
     "country": "Canada",
     "lat": 45.5017,
     "lng": -73.5673
+  },
+  {
+    "city": "Shah Alam",
+    "country": "Malaysia",
+    "lat": 3.0733,
+    "lng": 101.5185
+  },
+  {
+    "city": "Lubeck",
+    "country": "Germany",
+    "lat": 53.8654,
+    "lng": 10.6866
+  },
+  {
+    "city": "St Kilda",
+    "country": "Australia",
+    "lat": -37.8675,
+    "lng": 144.981
+  },
+  {
+    "city": "Essen",
+    "country": "Germany",
+    "lat": 51.4556,
+    "lng": 7.0116
+  },
+  {
+    "city": "Fuchu",
+    "country": "Japan",
+    "lat": 35.6688,
+    "lng": 139.4794
+  },
+  {
+    "city": "Bern",
+    "country": "Switzerland",
+    "lat": 46.948,
+    "lng": 7.4474
   }
 ]

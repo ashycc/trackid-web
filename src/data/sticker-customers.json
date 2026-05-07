@@ -340,5 +340,41 @@
     "country": "Switzerland",
     "lat": 46.948,
     "lng": 7.4474
+  },
+  {
+    "city": "Gunsan",
+    "country": "South Korea",
+    "lat": 35.9676,
+    "lng": 126.7367
+  },
+  {
+    "city": "Hannover",
+    "country": "Germany",
+    "lat": 52.3759,
+    "lng": 9.732
+  },
+  {
+    "city": "Guro-gu",
+    "country": "South Korea",
+    "lat": 37.4954,
+    "lng": 126.8874
+  },
+  {
+    "city": "Perth",
+    "country": "Australia",
+    "lat": -31.9523,
+    "lng": 115.8613
+  },
+  {
+    "city": "Mexico City",
+    "country": "Mexico",
+    "lat": 19.4326,
+    "lng": -99.1332
+  },
+  {
+    "city": "Takasaki",
+    "country": "Japan",
+    "lat": 36.3219,
+    "lng": 138.9979
   }
 ]

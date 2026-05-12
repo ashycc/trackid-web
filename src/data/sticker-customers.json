@@ -376,5 +376,71 @@
     "country": "Japan",
     "lat": 36.3219,
     "lng": 138.9979
+  },
+  {
+    "city": "Yongin",
+    "country": "South Korea",
+    "lat": 37.3219,
+    "lng": 127.098
+  },
+  {
+    "city": "Takaishi",
+    "country": "Japan",
+    "lat": 34.5223,
+    "lng": 135.4419
+  },
+  {
+    "city": "Kitanagoya",
+    "country": "Japan",
+    "lat": 35.2469,
+    "lng": 136.8748
+  },
+  {
+    "city": "Kyoto",
+    "country": "Japan",
+    "lat": 34.9854,
+    "lng": 135.6845
+  },
+  {
+    "city": "Tokyo",
+    "country": "Japan",
+    "lat": 35.7128,
+    "lng": 139.78
+  },
+  {
+    "city": "Ghent",
+    "country": "Belgium",
+    "lat": 51.0543,
+    "lng": 3.7174
+  },
+  {
+    "city": "Jeju",
+    "country": "South Korea",
+    "lat": 33.4996,
+    "lng": 126.5312
+  },
+  {
+    "city": "Mosbach",
+    "country": "Germany",
+    "lat": 49.3535,
+    "lng": 9.1483
+  },
+  {
+    "city": "Musashino",
+    "country": "Japan",
+    "lat": 35.7079,
+    "lng": 139.5663
+  },
+  {
+    "city": "Osaka",
+    "country": "Japan",
+    "lat": 34.7274,
+    "lng": 135.5447
+  },
+  {
+    "city": "Kakegawa",
+    "country": "Japan",
+    "lat": 34.7693,
+    "lng": 137.9999
   }
 ]

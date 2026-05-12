@@ -146,6 +146,7 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
     <div class="lightbox-content">
       <div class="lightbox-img-wrap">
         <img class="lightbox-img" id="lightbox-img" src="" alt="Rider photo" />
+        <div class="lightbox-spinner" id="lightbox-spinner" hidden></div>
         <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Previous photo">&lsaquo;</button>
         <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Next photo">&rsaquo;</button>
         <div class="lightbox-counter" id="lightbox-counter"></div>
@@ -216,6 +217,33 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
     object-fit: contain;
     display: block;
     background: #000;
+    transition: opacity 0.15s ease;
+  }
+
+  .lightbox-img.is-loading {
+    opacity: 0.35;
+  }
+
+  .lightbox-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 36px;
+    height: 36px;
+    margin: -18px 0 0 -18px;
+    border: 3px solid rgba(255, 255, 255, 0.25);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: lb-spin 0.8s linear infinite;
+    pointer-events: none;
+  }
+
+  .lightbox-spinner[hidden] {
+    display: none;
+  }
+
+  @keyframes lb-spin {
+    to { transform: rotate(360deg); }
   }
 
   .lightbox-nav {
@@ -317,11 +345,13 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
   const lbPrev = document.getElementById('lightbox-prev') as HTMLButtonElement;
   const lbNext = document.getElementById('lightbox-next') as HTMLButtonElement;
   const lbCounter = document.getElementById('lightbox-counter')!;
+  const lbSpinner = document.getElementById('lightbox-spinner')!;
 
   let photos: string[] = [];
   let currentIndex = 0;
   let currentRider = '';
   let currentLocation = '';
+  let renderToken = 0;
 
   function parsePhotos(raw: string | undefined, fallback: string): string[] {
     if (raw) {
@@ -333,10 +363,15 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
     return fallback ? [fallback] : [];
   }
 
+  function preload(urls: string[]) {
+    urls.forEach(url => { const img = new Image(); img.src = url; });
+  }
+
   function render() {
     if (photos.length === 0) return;
     currentIndex = ((currentIndex % photos.length) + photos.length) % photos.length;
-    lbImg.src = photos[currentIndex];
+    const target = photos[currentIndex];
+    const token = ++renderToken;
     lbImg.alt = `${currentRider || 'Rider'}'s TRACKID duck spotted in ${currentLocation || 'unknown location'}`;
 
     const multi = photos.length > 1;
@@ -344,6 +379,36 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
     lbNext.hidden = !multi;
     lbCounter.hidden = !multi;
     if (multi) lbCounter.textContent = `${currentIndex + 1} / ${photos.length}`;
+
+    const probe = new Image();
+    const showLoading = () => {
+      if (token !== renderToken) return;
+      lbImg.classList.add('is-loading');
+      lbSpinner.hidden = false;
+    };
+    // Only show loading state if the image hasn't already arrived in <80ms (cached images skip the flash)
+    const loadingTimer = window.setTimeout(showLoading, 80);
+    probe.onload = () => {
+      window.clearTimeout(loadingTimer);
+      if (token !== renderToken) return;
+      lbImg.src = target;
+      lbImg.classList.remove('is-loading');
+      lbSpinner.hidden = true;
+    };
+    probe.onerror = () => {
+      window.clearTimeout(loadingTimer);
+      if (token !== renderToken) return;
+      lbImg.src = target;
+      lbImg.classList.remove('is-loading');
+      lbSpinner.hidden = true;
+    };
+    probe.src = target;
+    if (probe.complete && probe.naturalWidth > 0) {
+      window.clearTimeout(loadingTimer);
+      lbImg.src = target;
+      lbImg.classList.remove('is-loading');
+      lbSpinner.hidden = true;
+    }
   }
 
   function openLightbox(el: HTMLElement) {
@@ -356,6 +421,7 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
     lbLoc.textContent = currentLocation;
     lbMsg.textContent = el.dataset.message || '';
     render();
+    preload(photos.slice(1));
     lightbox.style.display = 'flex';
   }
 

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>TRACKID · Sticker-Pack Invite Card · Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #ECE6DD;
+    --ink:   #0D0D0D;
+    --red:   #D4213D;
+    --muted: #8A8279;
+  }
+  html, body { margin: 0; padding: 0; background: #F5F1EA; color: var(--ink);
+               font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  .wrap { max-width: 880px; margin: 48px auto; padding: 0 24px; }
+  h1   { font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+         letter-spacing: -0.01em; margin: 0 0 4px; font-size: 22px; }
+  p.lead { color: var(--muted); margin: 0 0 32px; font-size: 14px; }
+
+  .card {
+    width: 85mm; height: 55mm;
+    box-shadow: 0 2px 18px rgba(0,0,0,.18);
+    background: var(--paper);
+    display: block;
+  }
+  .card svg { display: block; width: 100%; height: 100%; }
+
+  .row { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
+
+  .specs { font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+           line-height: 1.6; color: var(--ink); }
+  .specs dt { color: var(--red); font-weight: 700; letter-spacing: .12em;
+              text-transform: uppercase; font-size: 10px; margin-top: 14px; }
+  .specs dd { margin: 0; padding: 0; }
+  .specs dl { margin: 0; }
+
+  /* Print: one card per page at exact trim size. */
+  @page { size: 85mm 55mm; margin: 0; }
+  @media print {
+    html, body { background: white; }
+    .wrap { margin: 0; padding: 0; max-width: none; }
+    .specs, h1, p.lead, .row > div:not(.card) { display: none; }
+    .card { box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TRACKID · 包裹邀请卡</h1>
+  <p class="lead">85 × 55 mm · 单面 · 1:1 实际打印尺寸 · 浏览器按 ⌘P 导出 PDF</p>
+
+  <div class="row">
+    <div class="card">
+      <!-- inline SVG so printing renders crisp -->
+      <object type="image/svg+xml" data="card-print.svg" style="width:100%;height:100%;display:block;"></object>
+    </div>
+
+    <div class="specs">
+      <dl>
+        <dt>尺寸 / SIZE</dt>
+        <dd>85 × 55 mm（标准名片横版）</dd>
+
+        <dt>纸张建议 / PAPER</dt>
+        <dd>300gsm 哑面/超感书纸</dd>
+        <dd>奶色或本白，色号近 #ECE6DD</dd>
+
+        <dt>印刷 / PRINT</dt>
+        <dd>单面四色（CMYK 等效黑 + Pantone 186C 红）</dd>
+        <dd>出血请在 91 × 61 mm 板上居中放置</dd>
+
+        <dt>颜色 / COLORS</dt>
+        <dd>底色  Paper   #ECE6DD</dd>
+        <dd>文字  Ink     #0D0D0D</dd>
+        <dd>红线  Signal  #D4213D</dd>
+        <dd>注释  Muted   #8A8279</dd>
+
+        <dt>QR 链接 / QR TARGET</dt>
+        <dd>https://trackidriders.com</dd>
+
+        <dt>手写槽位 / SIGN SLOT</dt>
+        <dd>TKID— _ _ _ _（发货时手写订单号）</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+</body>
+</html>

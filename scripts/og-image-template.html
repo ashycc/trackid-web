@@ -1,0 +1,145 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    background: #ECE6DD;
+    color: #0D0D0D;
+    font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+    position: relative;
+    padding: 56px 64px;
+    display: grid;
+    grid-template-columns: 1fr 410px;
+    gap: 48px;
+  }
+
+  .frame-top, .frame-bot {
+    position: absolute; left: 64px; right: 64px; height: 1px;
+    background: #0D0D0D;
+  }
+  .frame-top { top: 40px; }
+  .frame-bot { bottom: 40px; }
+
+  /* left column */
+  .left { display: flex; flex-direction: column; justify-content: space-between; }
+
+  .top-row { display: flex; align-items: center; gap: 16px; }
+  .wordmark {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    line-height: 1;
+  }
+  .red-rule {
+    width: 56px; height: 4px; background: #D4213D;
+  }
+
+  .headline {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 96px;
+    line-height: 0.95;
+    letter-spacing: -2px;
+    margin-top: -24px;
+  }
+  .headline .red { color: #D4213D; }
+
+  .subhead {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 24px;
+    line-height: 1.45;
+    color: #0D0D0D;
+    max-width: 580px;
+    margin-top: 4px;
+  }
+  .subhead b { font-weight: 600; }
+
+  .footer {
+    display: flex; align-items: baseline; justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+  }
+  .footer .url { color: #0D0D0D; }
+  .footer .meta { color: #8A8279; font-size: 16px; font-weight: 500; }
+
+  /* right column: sticker card */
+  .sticker-card {
+    background: #FFFFFF;
+    border: 1px solid #0D0D0D;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+  }
+  .sticker-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #D4213D;
+    letter-spacing: 2.5px;
+    margin-bottom: 18px;
+  }
+  .sticker-img {
+    flex: 1;
+    background-image: url('../public/pekingduck-sticker.jpg');
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+  .sticker-cap {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    color: #0D0D0D;
+    margin-top: 18px;
+    display: flex; justify-content: space-between;
+    padding-top: 14px;
+    border-top: 1px solid #0D0D0D;
+  }
+  .sticker-cap .right { color: #8A8279; }
+</style>
+</head>
+<body>
+  <div class="frame-top"></div>
+  <div class="frame-bot"></div>
+
+  <div class="left">
+    <div>
+      <div class="top-row">
+        <span class="wordmark">TRACKID</span>
+        <span class="red-rule"></span>
+      </div>
+      <h1 class="headline" style="margin-top: 56px;">
+        DUCK STICKER<br>
+        RIDER<br>
+        <span class="red">REGISTRY.</span>
+      </h1>
+      <p class="subhead" style="margin-top: 36px;">
+        A Beijing roast duck on a fixie — riding in&nbsp;dozens&nbsp;of&nbsp;countries. <b>Show us where yours ended up.</b>
+      </p>
+    </div>
+
+    <div class="footer">
+      <span class="url">TRACKIDRIDERS.COM</span>
+      <span class="meta">STEEL · FIXED · GLOBAL</span>
+    </div>
+  </div>
+
+  <div class="sticker-card">
+    <div class="sticker-label">PEKING ROAST DUCK · STICKER</div>
+    <div class="sticker-img"></div>
+    <div class="sticker-cap">
+      <span>TKID-0000</span>
+      <span class="right">EST. 2023</span>
+    </div>
+  </div>
+</body>
+</html>

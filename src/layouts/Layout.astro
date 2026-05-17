@@ -6,18 +6,30 @@ interface Props {
   title?: string;
   description?: string;
   ogType?: string;
+  ogImage?: string;
+  keywords?: string;
 }
 
-const { title = 'TRACKID', description = 'A Beijing roast duck on a fixie — riding in dozens of countries. Show us where yours ended up.', ogType = 'website' } = Astro.props;
+const {
+  title = 'TRACKID — Duck Sticker Rider Registry',
+  description = 'TRACKID — Beijing roast duck sticker on steel fixies worldwide. A global rider registry: spot the duck, claim a TKID, land on the map.',
+  ogType = 'website',
+  ogImage = '/og-image.png',
+  keywords = 'trackid, trackid duck, duck sticker, roast duck sticker, fixie sticker, fixed gear sticker, track bike sticker, beijing fixed gear, steel frame, trackidriders',
+} = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, 'https://trackidriders.com');
+const ogImageURL = new URL(ogImage, 'https://trackidriders.com').href;
 
 const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "TRACKID",
+  "alternateName": ["TRACKID Beijing", "Trackid Duck", "烤鸭贴纸"],
   "url": "https://trackidriders.com",
-  "description": "Beijing-based bicycle shop and cultural brand",
+  "logo": "https://trackidriders.com/logo-black@2x.png",
+  "description": "TRACKID — Beijing-based fixed-gear brand. Maker of the roast-duck sticker found on steel track bikes across the world. The rider registry at trackidriders.com tracks every duck out there.",
+  "keywords": "duck sticker, roast duck sticker, fixie sticker, fixed gear, track bike, TRACKID, steel frame, Beijing fixed gear",
   "sameAs": [
     "https://www.instagram.com/trackid_beijing/",
     "https://www.youtube.com/@TRACKID-Beijing"
@@ -43,14 +55,29 @@ const webSiteSchema = {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    <meta name="keywords" content={keywords} />
+    <meta name="theme-color" content="#ECE6DD" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0D0D0D" media="(prefers-color-scheme: dark)" />
     <link rel="canonical" href={canonicalURL.href} />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="TRACKID" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content={ogType} />
     <meta property="og:url" content={canonicalURL.href} />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content={ogImageURL} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="TRACKID — Beijing roast duck sticker, global rider registry at trackidriders.com" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageURL} />
+    <meta name="twitter:image:alt" content="TRACKID — Beijing roast duck sticker, global rider registry" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

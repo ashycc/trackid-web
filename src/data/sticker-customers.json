@@ -442,5 +442,35 @@
     "country": "Japan",
     "lat": 34.7693,
     "lng": 137.9999
+  },
+  {
+    "city": "Torino",
+    "country": "Italy",
+    "lat": 45.1089,
+    "lng": 7.2436
+  },
+  {
+    "city": "Bern",
+    "country": "Switzerland",
+    "lat": 46.9568,
+    "lng": 7.4356
+  },
+  {
+    "city": "Koeln",
+    "country": "Germany",
+    "lat": 50.9375,
+    "lng": 6.9603
+  },
+  {
+    "city": "La Ciotat",
+    "country": "France",
+    "lat": 43.1747,
+    "lng": 5.6053
+  },
+  {
+    "city": "Augsburg",
+    "country": "Germany",
+    "lat": 48.3705,
+    "lng": 10.8978
   }
 ]

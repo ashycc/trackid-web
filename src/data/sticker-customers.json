@@ -472,5 +472,41 @@
     "country": "Germany",
     "lat": 48.3705,
     "lng": 10.8978
+  },
+  {
+    "city": "Kurashiki",
+    "country": "Japan",
+    "lat": 34.5851,
+    "lng": 133.772
+  },
+  {
+    "city": "Dusseldorf",
+    "country": "Germany",
+    "lat": 51.2277,
+    "lng": 6.7735
+  },
+  {
+    "city": "Deinste",
+    "country": "Germany",
+    "lat": 53.5856,
+    "lng": 9.5028
+  },
+  {
+    "city": "Hassocks",
+    "country": "United Kingdom",
+    "lat": 50.9234,
+    "lng": -0.1483
+  },
+  {
+    "city": "Brisbane",
+    "country": "Australia",
+    "lat": -27.5078,
+    "lng": 152.9389
+  },
+  {
+    "city": "Ghent",
+    "country": "Belgium",
+    "lat": 51.0488,
+    "lng": 3.7307
   }
 ]

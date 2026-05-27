@@ -508,5 +508,35 @@
     "country": "Belgium",
     "lat": 51.0488,
     "lng": 3.7307
+  },
+  {
+    "city": "Palma de Mallorca",
+    "country": "Spain",
+    "lat": 39.5696,
+    "lng": 2.6502
+  },
+  {
+    "city": "Mitcham",
+    "country": "Australia",
+    "lat": -37.8167,
+    "lng": 145.1969
+  },
+  {
+    "city": "Saint Petersburg",
+    "country": "Russia",
+    "lat": 59.8833,
+    "lng": 29.9069
+  },
+  {
+    "city": "Lyon",
+    "country": "France",
+    "lat": 45.734,
+    "lng": 4.84
+  },
+  {
+    "city": "Brighton",
+    "country": "Australia",
+    "lat": -37.9167,
+    "lng": 144.9959
   }
 ]

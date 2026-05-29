@@ -5,3 +5,6 @@ dist/
 .vercel
 .gstack/
 .claude/
+
+.tmp_export/
+.tmp_feishu/

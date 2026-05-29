@@ -143,11 +143,34 @@ def fetch_doc_markdown(retries=4):
             time.sleep(1.5)
             continue
         md = j.get('data', j).get('markdown', '')
-        if md and '##' in md:
+        if md and md.count('##') >= 15:
             return md
         last = j.get('error', {}).get('message', raw[:200])
         time.sleep(1.5)
     raise RuntimeError('读取飞书失败(已重试%d次): %s' % (retries, last))
+
+
+def export_doc_markdown():
+    """兜底: 用 drive +export 把文档「下载为 Markdown」到本地再读(等同飞书界面手动导出)。
+    导出走的是异步任务通道，比 docs +fetch 更稳。返回 markdown 文本或抛错。"""
+    outdir = os.path.join(ROOT, '.tmp_export')
+    os.makedirs(outdir, exist_ok=True)
+    last = ''
+    for _ in range(3):
+        p = run(['lark-cli', 'drive', '+export', '--token', DOC_TOKEN,
+                 '--doc-type', 'docx', '--file-extension', 'markdown',
+                 '--output-dir', '.tmp_export', '--overwrite', '--as', 'user'])
+        try:
+            j = json.loads(p.stdout[p.stdout.find('{'):])
+            path = j.get('data', {}).get('saved_path')
+            if path and os.path.exists(path):
+                md = open(path, encoding='utf-8').read()
+                if md.count('##') >= 15:
+                    return md
+        except Exception:
+            last = (p.stdout or p.stderr)[:200]
+        time.sleep(2)
+    raise RuntimeError('export 兜底也失败: ' + last)
 
 
 def parse_doc(md):
@@ -166,12 +189,17 @@ def parse_doc(md):
         cz = re.sub(r'[\U0001F1E6-\U0001F1FF]', '', title)
         cz = re.sub(r'（.*?）|\(.*?\)', '', cz).strip()
         groups.setdefault(cz, [])
-        if '<lark-table' in part:
-            for tbl in re.findall(r'<lark-table[^>]*>(.*?)</lark-table>', part, re.S):
+        if '<lark-table' in part or '<table' in part:
+            # 两种 HTML 表格: <lark-table><lark-tr><lark-td> (docs +fetch)
+            # 和 <table><tr><td> (drive +export markdown)
+            tr_tag = 'lark-tr' if '<lark-tr' in part else 'tr'
+            td_tag = 'lark-td' if '<lark-td' in part else 'td'
+            tbl_re = r'<lark-table[^>]*>(.*?)</lark-table>' if '<lark-table' in part else r'<table[^>]*>(.*?)</table>'
+            for tbl in re.findall(tbl_re, part, re.S):
                 rows = []
-                for tr in re.findall(r'<lark-tr>(.*?)</lark-tr>', tbl, re.S):
-                    cells = [unescape(re.sub(r'\s+', ' ', x).strip())
-                             for x in re.findall(r'<lark-td>(.*?)</lark-td>', tr, re.S)]
+                for tr in re.findall(r'<%s[^>]*>(.*?)</%s>' % (tr_tag, tr_tag), tbl, re.S):
+                    cells = [unescape(re.sub(r'<[^>]+>', '', re.sub(r'\s+', ' ', x)).strip())
+                             for x in re.findall(r'<%s[^>]*>(.*?)</%s>' % (td_tag, td_tag), tr, re.S)]
                     rows.append(cells)
                 if len(rows) < 2:
                     continue
@@ -364,11 +392,15 @@ def main():
         log("② 读取飞书现有客户(API)…")
         try:
             md = fetch_doc_markdown()
-        except RuntimeError as e:
-            log(f"\n❌ {e}")
-            log("   飞书 API 暂时读不到全文。为避免重复写入，已中止。")
-            log("   解决: 在飞书把文档「下载为 Markdown」，再用 --doc-md <文件路径> 重跑。\n")
-            sys.exit(2)
+        except RuntimeError:
+            log("   docs +fetch 读不全，自动改用 drive 导出 Markdown 兜底…")
+            try:
+                md = export_doc_markdown()
+                log("   ✓ 导出成功")
+            except RuntimeError as e:
+                log(f"\n❌ 飞书两种读取方式都失败: {e}")
+                log("   为避免重复写入已中止。稍后重试，或手动在飞书「下载为 Markdown」后用 --doc-md <路径> 重跑。\n")
+                sys.exit(2)
     doc_groups = {k: v for k, v in parse_doc(md).items()}
 
     # 安全闸: 读到的飞书客户数异常少 → 必是读取不全，停止(否则会把已存在客户当新增重复写入)

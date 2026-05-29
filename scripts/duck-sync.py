@@ -151,32 +151,45 @@ def fetch_doc_markdown(retries=4):
 
 
 def parse_doc(md):
-    """解析飞书 markdown → {国家: [记录]}, 顺序保留"""
+    """解析飞书文档 → {国家: [记录]}, 顺序保留。
+    同时支持两种导出格式: 管道 markdown 表格(| a | b |) 和 lark-table HTML
+    (飞书 API docs +fetch 返回的是后者，本地「下载为 Markdown」是前者)。
+    """
     groups = {}
-    cur = None
-    header = None
-    for ln in md.split('\n'):
-        h = re.match(r'##\s+(.+)', ln)
-        if h:
-            title = h.group(1)
-            if '汇总' in title or '新增' in title:
-                cur = None
-                continue
-            cz = re.sub(r'[\U0001F1E6-\U0001F1FF]', '', title)
-            cz = re.sub(r'（.*?）|\(.*?\)', '', cz).strip()
-            cur = cz
-            groups.setdefault(cz, [])
-            header = None
+    for part in re.split(r'\n(?=##\s)', md):
+        h = re.match(r'##\s*(.+)', part)
+        if not h:
             continue
-        if cur and ln.strip().startswith('|'):
-            cells = [unescape(x.strip()) for x in ln.strip().strip('|').split('|')]
-            if set(''.join(cells).replace(' ', '')) <= set('-:'):
-                continue
-            if header is None:
-                header = cells
-                continue
-            rec = dict(zip(header, cells))
-            groups[cur].append(rec)
+        title = h.group(1)
+        if '汇总' in title or '新增' in title:
+            continue
+        cz = re.sub(r'[\U0001F1E6-\U0001F1FF]', '', title)
+        cz = re.sub(r'（.*?）|\(.*?\)', '', cz).strip()
+        groups.setdefault(cz, [])
+        if '<lark-table' in part:
+            for tbl in re.findall(r'<lark-table[^>]*>(.*?)</lark-table>', part, re.S):
+                rows = []
+                for tr in re.findall(r'<lark-tr>(.*?)</lark-tr>', tbl, re.S):
+                    cells = [unescape(re.sub(r'\s+', ' ', x).strip())
+                             for x in re.findall(r'<lark-td>(.*?)</lark-td>', tr, re.S)]
+                    rows.append(cells)
+                if len(rows) < 2:
+                    continue
+                header = rows[0]
+                for r in rows[1:]:
+                    groups[cz].append(dict(zip(header, r)))
+        else:
+            header = None
+            for ln in part.split('\n'):
+                if not ln.strip().startswith('|'):
+                    continue
+                cells = [unescape(x.strip()) for x in ln.strip().strip('|').split('|')]
+                if set(''.join(cells).replace(' ', '')) <= set('-:'):
+                    continue
+                if header is None:
+                    header = cells
+                    continue
+                groups[cz].append(dict(zip(header, cells)))
     return groups
 
 

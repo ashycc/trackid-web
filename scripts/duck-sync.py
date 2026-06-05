@@ -277,7 +277,9 @@ def esc(s):
 
 
 def render_table(cz, flag, recs):
-    out = [f'## {flag} {cz}（{len(recs)}人）', '',
+    # 标题与表格之间不留空行：replace_range 不能跨段落，空行会触发
+    # lark-cli「多段落」警告并偶发中止替换(2026-06 英/德两表实测踩坑)。
+    out = [f'## {flag} {cz}（{len(recs)}人）',
            '|' + '|'.join(HDR) + '|', '|' + '|'.join(['---'] * len(HDR)) + '|']
     for i, r in enumerate(recs, 1):
         cells = [str(i)] + [esc(r.get(k, '')) for k in HDR[1:]]

@@ -556,5 +556,65 @@
     "country": "Australia",
     "lat": -37.7403,
     "lng": 144.9678
+  },
+  {
+    "city": "Harderwijk",
+    "country": "Netherlands",
+    "lat": 52.3441,
+    "lng": 5.6239
+  },
+  {
+    "city": "Brookvale",
+    "country": "Australia",
+    "lat": -33.7683,
+    "lng": 151.2729
+  },
+  {
+    "city": "Corinda",
+    "country": "Australia",
+    "lat": -27.5519,
+    "lng": 152.9798
+  },
+  {
+    "city": "Nottinghamshire",
+    "country": "United Kingdom",
+    "lat": 53.1521,
+    "lng": -1.0181
+  },
+  {
+    "city": "Hamamatsu",
+    "country": "Japan",
+    "lat": 34.7012,
+    "lng": 137.7516
+  },
+  {
+    "city": "Hamburg",
+    "country": "Germany",
+    "lat": 53.5543,
+    "lng": 10.01
+  },
+  {
+    "city": "Wiltshire",
+    "country": "United Kingdom",
+    "lat": 51.3339,
+    "lng": -1.8953
+  },
+  {
+    "city": "Grenzach-Wyhlen",
+    "country": "Germany",
+    "lat": 47.5431,
+    "lng": 7.6652
+  },
+  {
+    "city": "Ampliacion San Marcos Norte",
+    "country": "Mexico",
+    "lat": 19.2724,
+    "lng": -99.1232
+  },
+  {
+    "city": "Oftersheim",
+    "country": "Germany",
+    "lat": 49.3714,
+    "lng": 8.5756
   }
 ]

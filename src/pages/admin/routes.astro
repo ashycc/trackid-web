@@ -2,7 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import { getSessionFromCookie } from '../../lib/auth';
 import { supabaseAdmin } from '../../lib/supabase';
-import { routeNavUrl } from '../../lib/routes';
+import { googleMapsRouteUrl } from '../../lib/routes';
 import type { Waypoint } from '../../lib/ark';
 
 export const prerender = false;
@@ -28,8 +28,8 @@ const saved = Astro.url.searchParams.get('saved');
 const regenerated = Astro.url.searchParams.get('regenerated');
 const deleted = Astro.url.searchParams.get('deleted');
 
-function nav(country: string | null, wps: Waypoint[]) {
-  return routeNavUrl(country, Array.isArray(wps) ? wps : []);
+function gmaps(wps: Waypoint[]): string {
+  return googleMapsRouteUrl(Array.isArray(wps) ? wps : []);
 }
 ---
 
@@ -65,7 +65,7 @@ function nav(country: string | null, wps: Waypoint[]) {
       <div class="routes-list">
         {list.map((r) => {
           const wps: Waypoint[] = Array.isArray(r.waypoints) ? r.waypoints : [];
-          const { url: mapUrl, provider } = nav(r.country, wps);
+          const mapUrl = gmaps(wps);
           return (
             <div class:list={['route-card', { draft: r.status === 'draft' }]}>
               <div class="route-card-head">
@@ -114,7 +114,7 @@ function nav(country: string | null, wps: Waypoint[]) {
                   <button type="submit" class="btn btn-primary" style="padding: 8px 16px;">Save</button>
                   {mapUrl && (
                     <a href={mapUrl} target="_blank" rel="noopener" class="btn btn-ghost" style="padding: 8px 16px;">
-                      Preview in {provider === 'amap' ? 'Amap 高德' : 'Google Maps'} &rarr;
+                      Preview in Google Maps &rarr;
                     </a>
                   )}
                 </div>

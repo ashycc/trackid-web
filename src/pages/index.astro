@@ -4,7 +4,7 @@ import RegistryCard from '../components/RegistryCard.astro';
 import StatsBar from '../components/StatsBar.astro';
 import MapSection from '../components/MapSection.astro';
 import { supabaseAdmin } from '../lib/supabase';
-import { cityKey, routeNavUrl } from '../lib/routes';
+import { cityKey, googleMapsRouteUrl } from '../lib/routes';
 import stickerCustomers from '../data/sticker-customers.json';
 
 export const prerender = false;
@@ -32,20 +32,17 @@ interface RouteInfo {
   difficulty: string | null;
   description: string;
   mapUrl: string;
-  mapProvider: 'amap' | 'google';
 }
 const routesByCity = new Map<string, RouteInfo>();
 const routePolylines: Array<{ name: string; points: [number, number][] }> = [];
 (routeRows ?? []).forEach((r) => {
   const wps = Array.isArray(r.waypoints) ? r.waypoints : [];
-  const nav = routeNavUrl(r.country, wps);
   routesByCity.set(r.city_key, {
     name: r.name || `${r.city} Classic`,
     distance_km: r.distance_km ?? null,
     difficulty: r.difficulty ?? null,
     description: r.description || '',
-    mapUrl: nav.url,
-    mapProvider: nav.provider,
+    mapUrl: googleMapsRouteUrl(wps),
   });
   if (wps.length >= 2) {
     routePolylines.push({
@@ -593,9 +590,6 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
     routeDesc.textContent = route.description || '';
     if (route.mapUrl) {
       routeLink.href = route.mapUrl;
-      routeLink.textContent = route.mapProvider === 'amap'
-        ? '在高德地图打开骑行路线 →'
-        : 'Open cycling route in Google Maps →';
       routeLink.hidden = false;
     } else {
       routeLink.hidden = true;

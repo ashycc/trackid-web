@@ -616,5 +616,35 @@
     "country": "Germany",
     "lat": 49.3714,
     "lng": 8.5756
+  },
+  {
+    "city": "Castricum",
+    "country": "Netherlands",
+    "lat": 52.5412,
+    "lng": 4.6701
+  },
+  {
+    "city": "Lueneburg",
+    "country": "Germany",
+    "lat": 53.2482,
+    "lng": 10.4044
+  },
+  {
+    "city": "Moscow",
+    "country": "Russia",
+    "lat": 55.7558,
+    "lng": 37.6173
+  },
+  {
+    "city": "Saarbruecken",
+    "country": "Germany",
+    "lat": 49.2442,
+    "lng": 7.005
+  },
+  {
+    "city": "Bratislava",
+    "country": "Slovakia",
+    "lat": 48.1486,
+    "lng": 17.1077
   }
 ]

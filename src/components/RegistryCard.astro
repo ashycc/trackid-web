@@ -15,9 +15,10 @@ interface Props {
   photoUrls?: string[];
   message?: string;
   route?: RouteInfo | null;
+  riderRoute?: string | null;
 }
 
-const { registryId, riderName, location, photoUrl, photoUrls, message, route } = Astro.props;
+const { registryId, riderName, location, photoUrl, photoUrls, message, route, riderRoute } = Astro.props;
 const tkid = `TKID-${String(registryId).padStart(4, '0')}`;
 const photos = (photoUrls && photoUrls.length > 0) ? photoUrls : (photoUrl ? [photoUrl] : []);
 ---
@@ -31,6 +32,7 @@ const photos = (photoUrls && photoUrls.length > 0) ? photoUrls : (photoUrl ? [ph
   data-location={location}
   data-message={message || ''}
   data-route={route ? JSON.stringify(route) : ''}
+  data-rider-route={riderRoute || ''}
   style="cursor: pointer;"
 >
   {photoUrl ? (

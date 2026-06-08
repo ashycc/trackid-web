@@ -1,0 +1,254 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getSessionFromCookie } from '../../lib/auth';
+import { supabaseAdmin } from '../../lib/supabase';
+import { googleMapsRouteUrl } from '../../lib/routes';
+import type { Waypoint } from '../../lib/ark';
+
+export const prerender = false;
+
+const secret = import.meta.env.ADMIN_SESSION_SECRET;
+if (!getSessionFromCookie(Astro.request.headers.get('cookie'), secret)) {
+  return Astro.redirect('/admin/login');
+}
+
+const { data: routes } = await supabaseAdmin
+  .from('routes')
+  .select('*')
+  // draft routes (awaiting review) first, then by city
+  .order('status', { ascending: true })
+  .order('city', { ascending: true });
+
+const list = routes ?? [];
+const draftCount = list.filter((r) => r.status === 'draft').length;
+const publishedCount = list.filter((r) => r.status === 'published').length;
+
+const errorMsg = Astro.url.searchParams.get('error');
+const saved = Astro.url.searchParams.get('saved');
+const regenerated = Astro.url.searchParams.get('regenerated');
+const deleted = Astro.url.searchParams.get('deleted');
+
+function gmaps(wps: Waypoint[]): string {
+  return googleMapsRouteUrl(Array.isArray(wps) ? wps : []);
+}
+---
+
+<Layout title="TRACKID — Admin Routes">
+  <section class="section">
+    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <span class="section-label">Admin Dashboard</span>
+        <h1 class="display" style="font-size: 32px; font-weight: 700; letter-spacing: 3px; margin-top: 12px; line-height: 1.1;">
+          Cycling Routes
+        </h1>
+      </div>
+      <a href="/admin" class="btn btn-ghost">&larr; Submissions</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <p style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); margin-bottom: 16px;">
+      {draftCount} draft · {publishedCount} published. Routes are AI-generated drafts — review the
+      description and waypoints, then set status to <strong>published</strong> to show them publicly.
+    </p>
+
+    {errorMsg && <p class="route-flash route-flash-err">Error: {errorMsg}</p>}
+    {saved && <p class="route-flash">Saved.</p>}
+    {regenerated && <p class="route-flash">Regenerated draft.</p>}
+    {deleted && <p class="route-flash">Deleted.</p>}
+
+    {list.length === 0 ? (
+      <p style="color: var(--muted); margin-top: 24px;">
+        No routes yet. Approve a submission with a location to generate one.
+      </p>
+    ) : (
+      <div class="routes-list">
+        {list.map((r) => {
+          const wps: Waypoint[] = Array.isArray(r.waypoints) ? r.waypoints : [];
+          const mapUrl = gmaps(wps);
+          return (
+            <div class:list={['route-card', { draft: r.status === 'draft' }]}>
+              <div class="route-card-head">
+                <div>
+                  <span class:list={['route-status', r.status]}>{r.status}</span>
+                  <span class="route-city">{r.city}{r.country ? `, ${r.country}` : ''}</span>
+                </div>
+                <span class="route-source">{r.source}</span>
+              </div>
+
+              <form method="POST" action="/api/admin/save-route" class="route-form">
+                <input type="hidden" name="id" value={r.id} />
+
+                <label class="route-label">Route name
+                  <input type="text" name="name" value={r.name ?? ''} class="route-input" />
+                </label>
+
+                <div class="route-row">
+                  <label class="route-label" style="flex: 1;">Distance (km)
+                    <input type="number" step="0.1" name="distance_km" value={r.distance_km ?? ''} class="route-input" />
+                  </label>
+                  <label class="route-label" style="flex: 1;">Difficulty
+                    <select name="difficulty" class="route-input">
+                      {['easy', 'moderate', 'hard'].map((d) => (
+                        <option value={d} selected={r.difficulty === d}>{d}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label class="route-label" style="flex: 1;">Status
+                    <select name="status" class="route-input">
+                      <option value="draft" selected={r.status === 'draft'}>draft</option>
+                      <option value="published" selected={r.status === 'published'}>published</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label class="route-label">Description
+                  <textarea name="description" rows="2" class="route-input">{r.description ?? ''}</textarea>
+                </label>
+
+                <label class="route-label">Waypoints (JSON: [{`{ "name", "lat", "lng" }`}])
+                  <textarea name="waypoints" rows="5" class="route-input route-mono">{JSON.stringify(wps, null, 2)}</textarea>
+                </label>
+
+                <div class="route-actions">
+                  <button type="submit" class="btn btn-primary" style="padding: 8px 16px;">Save</button>
+                  {mapUrl && (
+                    <a href={mapUrl} target="_blank" rel="noopener" class="btn btn-ghost" style="padding: 8px 16px;">
+                      Preview in Google Maps &rarr;
+                    </a>
+                  )}
+                </div>
+              </form>
+
+              <div class="route-secondary">
+                <form method="POST" action="/api/admin/regenerate-route" style="margin: 0;">
+                  <input type="hidden" name="id" value={r.id} />
+                  <button type="submit" class="btn btn-ghost" style="padding: 6px 12px; font-size: 11px;">Regenerate (AI)</button>
+                </form>
+                <form method="POST" action="/api/admin/delete-route" class="route-delete-form" style="margin: 0;">
+                  <input type="hidden" name="id" value={r.id} />
+                  <button type="submit" class="btn btn-ghost route-delete-btn" style="padding: 6px 12px; font-size: 11px;">Delete</button>
+                </form>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </section>
+</Layout>
+
+<script is:inline>
+  document.addEventListener('submit', (e) => {
+    const form = e.target;
+    if (form instanceof HTMLFormElement && form.classList.contains('route-delete-form')) {
+      if (!confirm('Delete this route permanently?')) e.preventDefault();
+    }
+  });
+</script>
+
+<style>
+  .route-flash {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink);
+    background: var(--surface);
+    border-left: 3px solid var(--signal-red);
+    padding: 8px 12px;
+    margin-bottom: 16px;
+  }
+  .route-flash-err { color: var(--signal-red); }
+
+  .routes-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  @media (min-width: 880px) {
+    .routes-list { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .route-card {
+    border: 1px solid var(--weld);
+    padding: 16px;
+  }
+  .route-card.draft { border-left: 3px solid var(--signal-red); }
+
+  .route-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .route-status {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    margin-right: 8px;
+  }
+  .route-status.draft { background: var(--signal-red); color: #fff; }
+  .route-status.published { background: var(--weld); color: var(--ink); }
+
+  .route-city {
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .route-source {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .route-form { display: flex; flex-direction: column; gap: 10px; }
+
+  .route-label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+
+  .route-row { display: flex; gap: 10px; }
+
+  .route-input {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    padding: 6px 8px;
+    border: 1px solid var(--weld);
+    background: var(--paper);
+    color: var(--ink);
+    width: 100%;
+  }
+
+  .route-mono {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .route-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  .route-secondary {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--weld);
+  }
+
+  .route-delete-btn { color: var(--signal-red); }
+</style>

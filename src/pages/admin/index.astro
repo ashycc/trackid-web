@@ -60,9 +60,12 @@ function photoUrl(path: string): string {
           Submissions
         </h1>
       </div>
-      <form method="POST" action="/api/admin/logout">
-        <button type="submit" class="btn btn-ghost">Logout</button>
-      </form>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <a href="/admin/routes" class="btn btn-ghost">Routes</a>
+        <form method="POST" action="/api/admin/logout">
+          <button type="submit" class="btn btn-ghost">Logout</button>
+        </form>
+      </div>
     </div>
   </section>
 
@@ -110,7 +113,19 @@ function photoUrl(path: string): string {
                 {s.registry_id && <div class="card-id">{formatTkid(s.registry_id)}</div>}
                 <div class="card-rider">{s.rider_name}</div>
                 <div class="card-loc">{s.location}</div>
+                {currentStatus === 'pending' && (
+                  <div class="identify-row">
+                    <button type="button" class="identify-btn" data-id={s.id}>AI: identify city ↻</button>
+                    <span class="identify-result" data-for={s.id}></span>
+                  </div>
+                )}
                 {s.email && <div class="card-loc" style="margin-top: 4px;">{s.email}</div>}
+                {s.route_suggestion && (
+                  <div class="route-suggestion">
+                    <span class="route-suggestion-label">Rider's route tip</span>
+                    {s.route_suggestion}
+                  </div>
+                )}
                 <div class="card-loc" style="margin-top: 8px;">
                   {new Date(s.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                 </div>
@@ -155,6 +170,36 @@ function photoUrl(path: string): string {
         e.preventDefault();
       }
     }
+  });
+
+  // Vision fallback: ask Doubao to guess the city from the cover photo so the admin
+  // can sanity-check the rider-typed location before approving.
+  document.querySelectorAll('.identify-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      const out = document.querySelector('.identify-result[data-for="' + id + '"]');
+      btn.setAttribute('disabled', 'true');
+      if (out) out.textContent = 'identifying…';
+      try {
+        const res = await fetch('/api/admin/identify-city', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id }),
+        });
+        const data = await res.json();
+        if (data.success && out) {
+          const g = data.guess;
+          const place = [g.city, g.country].filter(Boolean).join(', ') || 'unknown';
+          out.textContent = '→ ' + place + ' (' + Math.round((g.confidence || 0) * 100) + '%)';
+        } else if (out) {
+          out.textContent = 'error: ' + (data.error || 'failed');
+        }
+      } catch (err) {
+        if (out) out.textContent = 'request failed';
+      } finally {
+        btn.removeAttribute('disabled');
+      }
+    });
   });
 </script>
 
@@ -293,5 +338,61 @@ function photoUrl(path: string): string {
   .admin-delete-btn:hover {
     background: var(--signal-red);
     color: #fff;
+  }
+
+  .identify-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+
+  .identify-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--weld);
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .identify-btn:hover:not([disabled]) {
+    color: var(--ink);
+    border-color: var(--ink);
+  }
+
+  .identify-btn[disabled] {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .identify-result {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--signal-red);
+  }
+
+  .route-suggestion {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: var(--surface);
+    border-left: 3px solid var(--signal-red);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  .route-suggestion-label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 3px;
   }
 </style>

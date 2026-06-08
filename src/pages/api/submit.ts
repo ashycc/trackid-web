@@ -48,6 +48,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     const location = (formData.get('location') as string)?.trim();
     const email = (formData.get('email') as string)?.trim();
     const message = (formData.get('message') as string)?.trim() || null;
+    const routeSuggestion = (formData.get('route_suggestion') as string)?.trim() || null;
     const captchaToken = (formData.get('h-captcha-response') as string)?.trim();
 
     if (rawPhotos.length === 0 || !riderName || !location || !email) {
@@ -119,6 +120,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         location,
         email,
         message,
+        route_suggestion: routeSuggestion,
         photo_paths: uploadedPaths,
         cover_index: 0,
         status: 'pending',

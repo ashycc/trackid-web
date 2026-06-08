@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { getSessionFromCookie } from '../../../lib/auth';
 import { supabaseAdmin } from '../../../lib/supabase';
 import { sendApprovalEmail } from '../../../lib/resend';
+import { ensureRouteForLocation } from '../../../lib/routes';
 
 export const prerender = false;
 
@@ -29,7 +30,7 @@ export const POST: APIRoute = async ({ request, redirect }) => {
   // Get submission details before updating
   const { data: submission } = await supabaseAdmin
     .from('submissions')
-    .select('location, email, rider_name')
+    .select('location, email, rider_name, route_suggestion')
     .eq('id', id)
     .single();
 
@@ -90,6 +91,10 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     console.error('Approve error:', error);
     return redirect(`/admin?status=${returnStatus}&error=approve_failed`);
   }
+
+  // Generate a draft cycling route for this city (if one doesn't exist yet).
+  // Never throws; admin curates and publishes it later from the Routes panel.
+  await ensureRouteForLocation(normalizedLocation, latitude, longitude, submission?.route_suggestion);
 
   const approved = submission;
 

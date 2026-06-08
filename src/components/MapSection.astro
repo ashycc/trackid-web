@@ -20,12 +20,18 @@ interface Customer {
   country: string;
 }
 
+interface RouteLine {
+  name: string;
+  points: [number, number][]; // [lng, lat]
+}
+
 interface Props {
   markers: Marker[];
   customers?: Customer[];
+  routes?: RouteLine[];
 }
 
-const { markers, customers = [] } = Astro.props;
+const { markers, customers = [], routes = [] } = Astro.props;
 
 // OpenFreeMap's /planet TileJSON endpoint started returning 403 to browser-origin
 // requests (Cloudflare WAF), which broke MapLibre's style → source resolution.
@@ -50,7 +56,7 @@ try {
 
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
 
-<script is:inline define:vars={{ markers, customers, tileUrls, tileMinzoom, tileMaxzoom }}>
+<script is:inline define:vars={{ markers, customers, routes, tileUrls, tileMinzoom, tileMaxzoom }}>
   function esc(s) {
     var d = document.createElement('div');
     d.textContent = s || '';
@@ -114,6 +120,41 @@ try {
     }
     map.on('styledata', hideLabels);
     map.on('load', hideLabels);
+
+    // Published cycling routes as indicative polylines connecting their waypoints.
+    // Re-added after every style change (setStyle wipes custom sources/layers).
+    var routeGeoJSON = {
+      type: 'FeatureCollection',
+      features: (routes || []).filter(function(r) {
+        return r.points && r.points.length >= 2;
+      }).map(function(r) {
+        return {
+          type: 'Feature',
+          properties: { name: r.name },
+          geometry: { type: 'LineString', coordinates: r.points },
+        };
+      }),
+    };
+
+    function addRoutes() {
+      if (!map.isStyleLoaded() || routeGeoJSON.features.length === 0) return;
+      if (map.getSource('trackid-routes')) return; // already added for this style
+      map.addSource('trackid-routes', { type: 'geojson', data: routeGeoJSON });
+      map.addLayer({
+        id: 'trackid-routes-line',
+        type: 'line',
+        source: 'trackid-routes',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#D4213D',
+          'line-width': 3,
+          'line-opacity': 0.7,
+          'line-dasharray': [2, 1.5],
+        },
+      });
+    }
+    map.on('styledata', addRoutes);
+    map.on('load', addRoutes);
 
     var observer = new MutationObserver(function() {
       var dark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -204,6 +245,9 @@ try {
       var allPoints = []
         .concat(markers.map(function(m) { return [m.lng, m.lat]; }))
         .concat(customers.map(function(c) { return [c.lng, c.lat]; }));
+      (routes || []).forEach(function(r) {
+        (r.points || []).forEach(function(p) { allPoints.push(p); });
+      });
       if (allPoints.length === 0) return;
       var bounds = allPoints.reduce(function(b, p) {
         return b.extend(p);

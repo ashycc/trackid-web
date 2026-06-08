@@ -141,7 +141,7 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
         The Dove<br />Became a Duck.
       </h1>
       <p style="max-width: 600px; margin-top: 20px; line-height: 1.7; color: var(--muted);">
-        If you know the Columbus dove, you know what this sticker is. If you don't — it's a Beijing roast duck on a fixie, and it's already riding in dozens of countries. Show us where yours ended up.
+        If you know the Columbus dove, you know what this sticker is. If you don't — it's a Beijing roast duck on a fixie, and it's already riding in dozens of countries. Show us where yours ended up — and find a ride for every city on the map.
       </p>
     </div>
   </section>
@@ -153,6 +153,9 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
       <h2 class="display" style="font-size: 32px; font-weight: 700; letter-spacing: 3px; margin-top: 16px; line-height: 1.1;">
         Every duck has a story.<br />Every frame has a city.
       </h2>
+      <p style="margin-top: 14px; color: var(--muted); line-height: 1.6; font-size: 15px;">
+        Tap any frame. Every city comes with a local's route — steal the line before you ever land.
+      </p>
     </div>
 
     <StatsBar totalRiders={totalRiders} countries={countries} cities={cities} />
@@ -255,7 +258,12 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
     max-width: 720px;
     width: 100%;
     background: var(--paper);
-    overflow: hidden;
+    /* Scroll when the photo + info (route cards can make this tall) exceed the viewport,
+       so the bottom is never clipped. 48px = the overlay's 24px top/bottom padding. */
+    max-height: calc(100vh - 48px);
+    max-height: calc(100dvh - 48px); /* dvh accounts for mobile browser chrome */
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .lightbox-img-wrap {

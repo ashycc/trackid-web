@@ -49,6 +49,43 @@ export function googleMapsRouteUrl(waypoints: Waypoint[]): string {
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
 
+// Amap (高德) cycling navigation. Google Maps has no usable cycling data in mainland
+// China, so China routes use Amap instead. Amap's URI API accepts WGS-84 directly via
+// coordinate=wgs84 (no GCJ-02 conversion needed) but takes only from/to, not via points —
+// for loops (start≈end) we pick the farthest waypoint as the destination so it isn't degenerate.
+export function amapRouteUrl(waypoints: Waypoint[]): string {
+  if (waypoints.length < 2) return '';
+  const from = waypoints[0];
+  let to = waypoints[waypoints.length - 1];
+  const isLoop = Math.abs(to.lat - from.lat) < 1e-4 && Math.abs(to.lng - from.lng) < 1e-4;
+  if (isLoop) {
+    let bestD = 0;
+    for (const w of waypoints) {
+      const d = (w.lat - from.lat) ** 2 + (w.lng - from.lng) ** 2;
+      if (d > bestD) { bestD = d; to = w; }
+    }
+  }
+  const leg = (w: Waypoint, fallback: string) =>
+    `${w.lng},${w.lat},${encodeURIComponent(w.name || fallback)}`;
+  const params = 'mode=ride&policy=1&src=trackid&coordinate=wgs84&callnative=1';
+  return `https://uri.amap.com/navigation?from=${leg(from, '起点')}&to=${leg(to, '终点')}&${params}`;
+}
+
+const CHINA_COUNTRIES = new Set(['china', '中国', '中国大陆', "people's republic of china"]);
+
+export function isChinaRoute(country: string | null | undefined): boolean {
+  return !!country && CHINA_COUNTRIES.has(country.trim().toLowerCase());
+}
+
+// Pick the right map provider by route location: Amap for mainland China, Google elsewhere.
+export function routeNavUrl(
+  country: string | null | undefined,
+  waypoints: Waypoint[]
+): { url: string; provider: 'amap' | 'google' } {
+  if (isChinaRoute(country)) return { url: amapRouteUrl(waypoints), provider: 'amap' };
+  return { url: googleMapsRouteUrl(waypoints), provider: 'google' };
+}
+
 // Look up an existing route by city.
 export async function getRouteByLocation(location: string): Promise<RouteRow | null> {
   const key = cityKey(location);

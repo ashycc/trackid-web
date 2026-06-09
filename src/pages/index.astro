@@ -27,22 +27,26 @@ const { data: routeRows } = await supabaseAdmin
   .eq('status', 'published');
 
 interface RouteInfo {
+  id: string;
   name: string;
   distance_km: number | null;
   difficulty: string | null;
   description: string;
   mapUrl: string;
+  likeCount: number;
 }
 const routesByCity = new Map<string, RouteInfo>();
 const routePolylines: Array<{ name: string; points: [number, number][] }> = [];
 (routeRows ?? []).forEach((r) => {
   const wps = Array.isArray(r.waypoints) ? r.waypoints : [];
   routesByCity.set(r.city_key, {
+    id: r.id,
     name: r.name || `${r.city} Classic`,
     distance_km: r.distance_km ?? null,
     difficulty: r.difficulty ?? null,
     description: r.description || '',
     mapUrl: googleMapsRouteUrl(wps),
+    likeCount: r.like_count ?? 0,
   });
   if (wps.length >= 2) {
     routePolylines.push({
@@ -169,6 +173,7 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
         {riders.map(rider => (
           <RegistryCard
             registryId={rider.registry_id}
+            submissionId={rider.id}
             riderName={rider.rider_name}
             location={rider.location}
             photoUrl={photoUrl(coverPath(rider))}
@@ -176,6 +181,7 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
             message={rider.message}
             route={routeForLocation(rider.location)}
             riderRoute={rider.route_suggestion}
+            riderRouteLikeCount={rider.like_count ?? 0}
           />
         ))}
       </div>
@@ -201,14 +207,26 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
         <div class="lightbox-rider-route" id="lightbox-rider-route" hidden>
           <div class="route-eyebrow" id="rider-route-eyebrow">Rider's pick</div>
           <div class="rider-route-text" id="rider-route-text"></div>
-          <a class="route-link" id="rider-route-link" href="#" target="_blank" rel="noopener" hidden>Open this rider's route &rarr;</a>
+          <div class="route-actions">
+            <a class="route-link" id="rider-route-link" href="#" target="_blank" rel="noopener" hidden>Open this rider's route &rarr;</a>
+            <button class="route-like" id="rider-route-like" type="button" aria-pressed="false" aria-label="Like this rider's route">
+              <span class="route-like-heart" aria-hidden="true">&#9829;</span>
+              <span class="route-like-count" id="rider-route-like-count">0</span>
+            </button>
+          </div>
         </div>
         <div class="lightbox-route" id="lightbox-route" hidden>
           <div class="route-eyebrow">Classic ride here</div>
           <div class="route-name" id="route-name"></div>
           <div class="route-stats" id="route-stats"></div>
           <div class="route-desc" id="route-desc"></div>
-          <a class="route-link" id="route-link" href="#" target="_blank" rel="noopener">Open cycling route in Google Maps &rarr;</a>
+          <div class="route-actions">
+            <a class="route-link" id="route-link" href="#" target="_blank" rel="noopener">Open cycling route in Google Maps &rarr;</a>
+            <button class="route-like" id="route-like" type="button" aria-pressed="false" aria-label="Like this route">
+              <span class="route-like-heart" aria-hidden="true">&#9829;</span>
+              <span class="route-like-count" id="route-like-count">0</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -477,6 +495,81 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
   .route-link[hidden] {
     display: none;
   }
+
+  .route-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 12px;
+  }
+
+  .route-actions .route-link {
+    margin-top: 0;
+  }
+
+  /* Social-style like button: outline heart that fills signal-red when liked. */
+  .route-like {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0;
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid var(--weld);
+    border-radius: 999px;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    transition: color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  }
+
+  .route-like:hover {
+    color: var(--signal-red);
+    border-color: var(--signal-red);
+  }
+
+  .route-like-heart {
+    font-size: 14px;
+    line-height: 1;
+    color: var(--muted);
+    transition: color 0.15s ease, transform 0.2s ease;
+  }
+
+  .route-like:hover .route-like-heart {
+    color: var(--signal-red);
+  }
+
+  .route-like.is-liked {
+    color: var(--signal-red);
+    border-color: var(--signal-red);
+  }
+
+  .route-like.is-liked .route-like-heart {
+    color: var(--signal-red);
+  }
+
+  /* Pop the heart when a like lands. */
+  .route-like.just-liked .route-like-heart {
+    animation: like-pop 0.32s ease;
+  }
+
+  @keyframes like-pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.45); }
+    100% { transform: scale(1); }
+  }
+
+  .route-like-count {
+    min-width: 8px;
+    text-align: left;
+  }
+
+  .route-like[hidden] {
+    display: none;
+  }
 </style>
 
 <script>
@@ -495,6 +588,10 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
   const routeStats = document.getElementById('route-stats')!;
   const routeDesc = document.getElementById('route-desc')!;
   const routeLink = document.getElementById('route-link') as HTMLAnchorElement;
+  const routeLike = document.getElementById('route-like') as HTMLButtonElement;
+  const routeLikeCount = document.getElementById('route-like-count')!;
+  const riderRouteLike = document.getElementById('rider-route-like') as HTMLButtonElement;
+  const riderRouteLikeCount = document.getElementById('rider-route-like-count')!;
   const lbClose = document.getElementById('lightbox-close')!;
   const lbPrev = document.getElementById('lightbox-prev') as HTMLButtonElement;
   const lbNext = document.getElementById('lightbox-next') as HTMLButtonElement;
@@ -506,6 +603,103 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
   let currentRider = '';
   let currentLocation = '';
   let renderToken = 0;
+  let currentRouteId = '';
+  let currentRiderSubId = '';
+  const likeBusy = new Set<string>();
+
+  // --- Route likes (anonymous, localStorage-backed) ---
+  function visitorId(): string {
+    try {
+      let id = localStorage.getItem('trackid_visitor_id');
+      if (!id) {
+        id = (crypto as any)?.randomUUID?.()
+          || `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+        localStorage.setItem('trackid_visitor_id', id);
+      }
+      return id;
+    } catch {
+      return '';
+    }
+  }
+
+  function likedSet(): Set<string> {
+    try {
+      const raw = localStorage.getItem('trackid_liked_routes');
+      const arr = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(arr) ? arr : []);
+    } catch {
+      return new Set();
+    }
+  }
+
+  function saveLiked(set: Set<string>) {
+    try {
+      localStorage.setItem('trackid_liked_routes', JSON.stringify([...set]));
+    } catch {}
+  }
+
+  // Namespace the liked-key by type so a route uuid and a submission uuid never clash.
+  function likeKey(type: string, id: string): string {
+    return `${type}:${id}`;
+  }
+
+  function paintLike(button: HTMLButtonElement, countEl: HTMLElement, liked: boolean, count: number) {
+    button.classList.toggle('is-liked', liked);
+    button.setAttribute('aria-pressed', liked ? 'true' : 'false');
+    countEl.textContent = String(Math.max(count, 0));
+  }
+
+  // True while the shown target still matches what a request started on (so a
+  // late response doesn't repaint a card the user has since navigated away from).
+  function stillShowing(type: string, id: string): boolean {
+    return type === 'route' ? currentRouteId === id : currentRiderSubId === id;
+  }
+
+  async function toggleLike(
+    type: 'route' | 'rider_route',
+    id: string,
+    button: HTMLButtonElement,
+    countEl: HTMLElement,
+  ) {
+    const key = likeKey(type, id);
+    if (!id || likeBusy.has(key)) return;
+    const vid = visitorId();
+    if (!vid) return;
+
+    const set = likedSet();
+    const wasLiked = set.has(key);
+    const current = parseInt(countEl.textContent || '0', 10) || 0;
+
+    // Optimistic update.
+    const optimisticCount = wasLiked ? current - 1 : current + 1;
+    paintLike(button, countEl, !wasLiked, optimisticCount);
+    if (!wasLiked) {
+      button.classList.remove('just-liked');
+      void button.offsetWidth; // restart animation
+      button.classList.add('just-liked');
+    }
+
+    likeBusy.add(key);
+    try {
+      const res = await fetch('/api/likes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_type: type, target_id: id, visitor_id: vid }),
+      });
+      if (!res.ok) throw new Error('like failed');
+      const data = await res.json();
+      const next = likedSet();
+      if (data.liked) next.add(key);
+      else next.delete(key);
+      saveLiked(next);
+      if (stillShowing(type, id)) paintLike(button, countEl, !!data.liked, data.count ?? optimisticCount);
+    } catch {
+      // Revert on failure, only if still on this target.
+      if (stillShowing(type, id)) paintLike(button, countEl, wasLiked, current);
+    } finally {
+      likeBusy.delete(key);
+    }
+  }
 
   function parsePhotos(raw: string | undefined, fallback: string): string[] {
     if (raw) {
@@ -565,9 +759,9 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
     }
   }
 
-  function renderRiderRoute(raw: string | undefined, rider: string) {
+  function renderRiderRoute(raw: string | undefined, rider: string, subId: string, likeCount: number) {
     const text = (raw || '').trim();
-    if (!text) { lbRiderRoute.hidden = true; return; }
+    if (!text) { lbRiderRoute.hidden = true; currentRiderSubId = ''; return; }
     riderRouteEyebrow.textContent = rider ? `${rider}'s pick` : "Rider's pick";
     // Pull the first URL out of the suggestion (Google Maps / Strava / komoot link).
     const urlMatch = text.match(/https?:\/\/[^\s]+/);
@@ -581,14 +775,29 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
       riderRouteLink.hidden = true;
       riderRouteText.hidden = false;
     }
+
+    currentRiderSubId = subId || '';
+    riderRouteLike.hidden = !currentRiderSubId;
+    if (currentRiderSubId) {
+      riderRouteLike.classList.remove('just-liked');
+      paintLike(riderRouteLike, riderRouteLikeCount, likedSet().has(likeKey('rider_route', currentRiderSubId)), likeCount);
+    }
+
     lbRiderRoute.hidden = false;
   }
 
   function renderRoute(raw: string | undefined) {
-    if (!raw) { lbRoute.hidden = true; return; }
+    if (!raw) { lbRoute.hidden = true; currentRouteId = ''; return; }
     let route: any;
-    try { route = JSON.parse(raw); } catch { lbRoute.hidden = true; return; }
-    if (!route || !route.name) { lbRoute.hidden = true; return; }
+    try { route = JSON.parse(raw); } catch { lbRoute.hidden = true; currentRouteId = ''; return; }
+    if (!route || !route.name) { lbRoute.hidden = true; currentRouteId = ''; return; }
+
+    currentRouteId = typeof route.id === 'string' ? route.id : '';
+    routeLike.hidden = !currentRouteId;
+    if (currentRouteId) {
+      routeLike.classList.remove('just-liked');
+      paintLike(routeLike, routeLikeCount, likedSet().has(likeKey('route', currentRouteId)), route.likeCount ?? 0);
+    }
 
     routeName.textContent = route.name;
     const stats: string[] = [];
@@ -614,7 +823,12 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
     lbRider.textContent = currentRider;
     lbLoc.textContent = currentLocation;
     lbMsg.textContent = el.dataset.message || '';
-    renderRiderRoute(el.dataset.riderRoute, currentRider);
+    renderRiderRoute(
+      el.dataset.riderRoute,
+      currentRider,
+      el.dataset.submissionId || '',
+      parseInt(el.dataset.riderRouteLikes || '0', 10) || 0,
+    );
     renderRoute(el.dataset.route);
     render();
     preload(photos.slice(1));
@@ -638,6 +852,14 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
   lbClose.addEventListener('click', closeLightbox);
   lbPrev.addEventListener('click', (e) => { e.stopPropagation(); step(-1); });
   lbNext.addEventListener('click', (e) => { e.stopPropagation(); step(1); });
+  routeLike.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleLike('route', currentRouteId, routeLike, routeLikeCount);
+  });
+  riderRouteLike.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleLike('rider_route', currentRiderSubId, riderRouteLike, riderRouteLikeCount);
+  });
 
   lightbox.addEventListener('click', (e) => {
     if (e.target === lightbox) closeLightbox();

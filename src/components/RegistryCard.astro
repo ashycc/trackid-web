@@ -1,14 +1,17 @@
 ---
 interface RouteInfo {
+  id: string;
   name: string;
   distance_km: number | null;
   difficulty: string | null;
   description: string;
   mapUrl: string;
+  likeCount: number;
 }
 
 interface Props {
   registryId: number;
+  submissionId: string;
   riderName: string;
   location: string;
   photoUrl?: string;
@@ -16,9 +19,10 @@ interface Props {
   message?: string;
   route?: RouteInfo | null;
   riderRoute?: string | null;
+  riderRouteLikeCount?: number;
 }
 
-const { registryId, riderName, location, photoUrl, photoUrls, message, route, riderRoute } = Astro.props;
+const { registryId, submissionId, riderName, location, photoUrl, photoUrls, message, route, riderRoute, riderRouteLikeCount } = Astro.props;
 const tkid = `TKID-${String(registryId).padStart(4, '0')}`;
 const photos = (photoUrls && photoUrls.length > 0) ? photoUrls : (photoUrl ? [photoUrl] : []);
 ---
@@ -33,6 +37,8 @@ const photos = (photoUrls && photoUrls.length > 0) ? photoUrls : (photoUrl ? [ph
   data-message={message || ''}
   data-route={route ? JSON.stringify(route) : ''}
   data-rider-route={riderRoute || ''}
+  data-submission-id={submissionId}
+  data-rider-route-likes={String(riderRouteLikeCount ?? 0)}
   style="cursor: pointer;"
 >
   {photoUrl ? (

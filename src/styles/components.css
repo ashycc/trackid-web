@@ -180,11 +180,68 @@
   margin-top: var(--sp-2xs);
 }
 
+.registry-card .card-loc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+
 .registry-card .card-loc {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
   color: var(--muted);
-  margin-top: 2px;
+}
+
+/* Thumbnail post like — compact, right of the location line. */
+.registry-card .card-like {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  padding: 2px 4px;
+  margin: -2px -4px -2px 0;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  transition: color 0.15s ease;
+}
+
+.registry-card .card-like:hover {
+  color: var(--signal-red);
+}
+
+.registry-card .card-like-heart {
+  font-size: 13px;
+  line-height: 1;
+  color: var(--weld);
+  transition: color 0.15s ease, transform 0.2s ease;
+}
+
+.registry-card .card-like:hover .card-like-heart {
+  color: var(--signal-red);
+}
+
+.registry-card .card-like.is-liked {
+  color: var(--signal-red);
+}
+
+.registry-card .card-like.is-liked .card-like-heart {
+  color: var(--signal-red);
+}
+
+.registry-card .card-like.just-liked .card-like-heart {
+  animation: card-like-pop 0.32s ease;
+}
+
+@keyframes card-like-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.45); }
+  100% { transform: scale(1); }
 }
 
 .registry-card .card-msg {

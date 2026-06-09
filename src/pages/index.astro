@@ -163,9 +163,9 @@ const mapCustomers = stickerCustomers.filter(c => !riderCitySet.has(c.city.toLow
     {(mapMarkers.length > 0 || mapCustomers.length > 0) && <MapSection markers={mapMarkers} customers={mapCustomers} routes={routePolylines} />}
 
     {riders.length === 0 ? (
-      <p style="color: var(--muted); margin-top: 32px;">No ducks spotted yet. <a href="/upload" style="color: var(--signal-red);">Be the first.</a></p>
+      <p id="the-flock" style="color: var(--muted); margin-top: 32px; scroll-margin-top: 24px;">No ducks spotted yet. <a href="/upload" style="color: var(--signal-red);">Be the first.</a></p>
     ) : (
-      <div class="registry-grid" style="margin-top: 32px;">
+      <div class="registry-grid" id="the-flock" style="margin-top: 32px; scroll-margin-top: 24px;">
         {riders.map(rider => (
           <RegistryCard
             registryId={rider.registry_id}

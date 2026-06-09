@@ -18,6 +18,7 @@ import Layout from '../layouts/Layout.astro';
       <p>We listed the sticker on AliExpress for the price of a cheap beer. No ads. No influencer drops. Just a duck on a bike, sitting between phone cases and LED strips. Then something happened.</p>
       <p>A kid in London stuck it on a Vigorelli. A messenger in São Paulo slapped it on a beater Pista. Someone in Tokyo put it on a NJS frame worth more than our rent. A dude in Melbourne stuck it on his helmet, ruining a perfectly clean aesthetic. On purpose.</p>
       <p>More and more orders across dozens of countries. Zero marketing budget. One very well-traveled duck.</p>
+      <p>And now the duck pays you back. A rider tags their city — bike, sticker, real roads — and we hang the local line on it. Not the algorithm's loop. The one the couriers actually ride: the climb that hurts, the descent that's worth it. Tap the frame. Steal the line. <a class="story-link" href="/#the-flock">See who's posted &rarr;</a></p>
       <p>This page is the proof. Every photo, every city, every rider who looked at this duck and thought: <em>yeah, that's mine.</em></p>
     </div>
   </section>
@@ -80,6 +81,19 @@ import Layout from '../layouts/Layout.astro';
 
   .story-body em {
     font-style: italic;
+  }
+
+  .story-link {
+    color: var(--signal-red);
+    text-decoration: none;
+    border-bottom: 1px solid var(--signal-red);
+    padding-bottom: 1px;
+    white-space: nowrap;
+    transition: opacity 0.15s ease;
+  }
+
+  .story-link:hover {
+    opacity: 0.7;
   }
 
   .sticker-showcase {

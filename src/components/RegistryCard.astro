@@ -6,7 +6,6 @@ interface RouteInfo {
   difficulty: string | null;
   description: string;
   mapUrl: string;
-  likeCount: number;
 }
 
 interface Props {
@@ -19,10 +18,10 @@ interface Props {
   message?: string;
   route?: RouteInfo | null;
   riderRoute?: string | null;
-  riderRouteLikeCount?: number;
+  postLikeCount?: number;
 }
 
-const { registryId, submissionId, riderName, location, photoUrl, photoUrls, message, route, riderRoute, riderRouteLikeCount } = Astro.props;
+const { registryId, submissionId, riderName, location, photoUrl, photoUrls, message, route, riderRoute, postLikeCount } = Astro.props;
 const tkid = `TKID-${String(registryId).padStart(4, '0')}`;
 const photos = (photoUrls && photoUrls.length > 0) ? photoUrls : (photoUrl ? [photoUrl] : []);
 ---
@@ -38,7 +37,7 @@ const photos = (photoUrls && photoUrls.length > 0) ? photoUrls : (photoUrl ? [ph
   data-route={route ? JSON.stringify(route) : ''}
   data-rider-route={riderRoute || ''}
   data-submission-id={submissionId}
-  data-rider-route-likes={String(riderRouteLikeCount ?? 0)}
+  data-post-likes={String(postLikeCount ?? 0)}
   style="cursor: pointer;"
 >
   {photoUrl ? (
@@ -49,7 +48,13 @@ const photos = (photoUrls && photoUrls.length > 0) ? photoUrls : (photoUrl ? [ph
   <div class="card-meta">
     <div class="card-id">{tkid}</div>
     <div class="card-rider">{riderName}</div>
-    <div class="card-loc">{location}</div>
+    <div class="card-loc-row">
+      <div class="card-loc">{location}</div>
+      <button class="card-like" type="button" data-post-id={submissionId} aria-pressed="false" aria-label="Like this post">
+        <span class="card-like-heart" aria-hidden="true">&#9829;</span>
+        <span class="card-like-count">{postLikeCount ?? 0}</span>
+      </button>
+    </div>
     {message && <div class="card-msg">"{message}"</div>}
   </div>
 </article>

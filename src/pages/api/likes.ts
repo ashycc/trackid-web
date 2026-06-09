@@ -4,7 +4,7 @@ import { supabaseAdmin } from '../../lib/supabase';
 export const prerender = false;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const TYPES = new Set(['route', 'rider_route']);
+const TYPES = new Set(['route', 'rider_route', 'post']);
 
 function json(obj: unknown, status: number) {
   return new Response(JSON.stringify(obj), {

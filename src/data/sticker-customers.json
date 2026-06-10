@@ -646,5 +646,23 @@
     "country": "Slovakia",
     "lat": 48.1486,
     "lng": 17.1077
+  },
+  {
+    "city": "Челябинск г",
+    "country": "Russia",
+    "lat": 55.1392,
+    "lng": 61.2897
+  },
+  {
+    "city": "Kapunda",
+    "country": "Australia",
+    "lat": -34.3434,
+    "lng": 138.9121
+  },
+  {
+    "city": "Passau",
+    "country": "Germany",
+    "lat": 48.5703,
+    "lng": 13.4695
   }
 ]

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="85mm" height="55mm"
+     viewBox="0 0 85 55">
+
+  <!-- ============================================== -->
+  <!-- TRACKID Wholesale Invite Card                   -->
+  <!-- Trim: 85 × 55 mm                                -->
+  <!-- ============================================== -->
+
+  <!-- Paper background -->
+  <rect width="85" height="55" fill="#ECE6DD"/>
+
+  <!-- ===== Top hairline ===== -->
+  <line x1="5" y1="5" x2="80" y2="5"
+        stroke="#0D0D0D" stroke-width="0.2"/>
+
+  <!-- ===== Header: wordmark + section tag ===== -->
+  <text x="5" y="10.5"
+        font-family="'Space Grotesk', 'Helvetica Neue', Helvetica, sans-serif"
+        font-size="5.2" font-weight="700"
+        letter-spacing="0.35" fill="#0D0D0D">TRACKID</text>
+
+  <text x="80" y="10.5" text-anchor="end"
+        font-family="'IBM Plex Mono', 'Menlo', monospace"
+        font-size="2.5" font-weight="700"
+        letter-spacing="0.15" fill="#0D0D0D">WHOLESALE · 批发</text>
+
+  <line x1="5" y1="12.8" x2="13" y2="12.8"
+        stroke="#D4213D" stroke-width="0.5"/>
+  <line x1="64" y1="12.8" x2="80" y2="12.8"
+        stroke="#0D0D0D" stroke-width="0.2"/>
+
+  <!-- ===== Headline (two lines, left column) ===== -->
+  <text x="5" y="21"
+        font-family="'Space Grotesk', 'Helvetica Neue', Helvetica, sans-serif"
+        font-size="6.6" font-weight="700"
+        letter-spacing="-0.08" fill="#0D0D0D">STOCK THE</text>
+  <text x="5" y="28"
+        font-family="'Space Grotesk', 'Helvetica Neue', Helvetica, sans-serif"
+        font-size="6.6" font-weight="700"
+        letter-spacing="-0.08" fill="#0D0D0D">RACK.</text>
+
+  <line x1="5" y1="30.5" x2="12" y2="30.5"
+        stroke="#D4213D" stroke-width="0.7"/>
+
+  <!-- ===== Email "stamp" block, right column ===== -->
+  <!-- Frame -->
+  <rect x="44" y="13.5" width="33" height="18"
+        fill="none" stroke="#0D0D0D" stroke-width="0.3"/>
+
+  <!-- Top-left mini label -->
+  <text x="45.2" y="16.6"
+        font-family="'IBM Plex Mono', 'Menlo', monospace"
+        font-size="2" font-weight="700"
+        letter-spacing="0.2" fill="#D4213D">DIRECT LINE ↗</text>
+
+  <!-- Hero email address, single line, centered -->
+  <text x="60.5" y="25" text-anchor="middle"
+        font-family="'IBM Plex Mono', 'Menlo', monospace"
+        font-size="2.85" font-weight="700"
+        letter-spacing="0" fill="#0D0D0D">trackid_bj@126.com</text>
+
+  <!-- Bottom-right mini label inside frame -->
+  <text x="75.8" y="30.4" text-anchor="end"
+        font-family="'IBM Plex Mono', 'Menlo', monospace"
+        font-size="1.8" font-weight="500"
+        letter-spacing="0.15" fill="#8A8279">RESPONSE ≤ 24H</text>
+
+  <!-- ===== Body copy, full width below headline & email ===== -->
+  <text x="5" y="36.2"
+        font-family="'IBM Plex Sans', 'Helvetica Neue', Helvetica, sans-serif"
+        font-size="3" fill="#0D0D0D">Wholesale for shops, studios, and crews.</text>
+  <text x="5" y="40.4"
+        font-family="'IBM Plex Sans', 'Helvetica Neue', Helvetica, sans-serif"
+        font-size="3" fill="#0D0D0D">Tell us what you move. We&apos;ll send the sheet.</text>
+  <text x="5" y="44.6"
+        font-family="'IBM Plex Sans', 'Helvetica Neue', Helvetica, sans-serif"
+        font-size="3" font-weight="600" fill="#0D0D0D">Returning buyers always pay less.</text>
+
+  <!-- ===== Dealer signature slot ===== -->
+  <text x="5" y="49.2">
+    <tspan font-family="'IBM Plex Mono', 'Menlo', monospace"
+           font-size="2.3" font-weight="700"
+           letter-spacing="0.2" fill="#D4213D">DEALER</tspan>
+    <tspan dx="3"
+           font-family="'IBM Plex Mono', 'Menlo', monospace"
+           font-size="3.2" font-weight="500"
+           letter-spacing="0.4" fill="#0D0D0D">TKID-D—  _  _  _  _</tspan>
+  </text>
+
+  <!-- "EMAIL" hint tucked next to dealer slot on the right -->
+  <text x="80" y="49.2" text-anchor="end"
+        font-family="'IBM Plex Mono', 'Menlo', monospace"
+        font-size="2.1" font-weight="700"
+        letter-spacing="0.3" fill="#8A8279">✉ EMAIL FOR PRICES</text>
+
+  <!-- ===== Bottom hairline ===== -->
+  <line x1="5" y1="51.5" x2="80" y2="51.5"
+        stroke="#0D0D0D" stroke-width="0.2"/>
+</svg>

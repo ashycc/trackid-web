@@ -8,3 +8,4 @@ dist/
 
 .tmp_export/
 .tmp_feishu/
+__pycache__/

@@ -32,37 +32,59 @@ interface Props {
 }
 
 const { markers, customers = [], routes = [] } = Astro.props;
+
+// OpenFreeMap's /planet TileJSON endpoint started returning 403 to browser-origin
+// requests (Cloudflare WAF), which broke MapLibre's style → source resolution.
+// Server-side requests still work, so resolve the tile URL pattern here and inline
+// it into the style on the client to bypass the blocked endpoint entirely.
+let tileUrls: string[] = [];
+let tileMinzoom = 0;
+let tileMaxzoom = 14;
+try {
+  const meta = await fetch('https://tiles.openfreemap.org/planet').then(r => r.json());
+  if (Array.isArray(meta?.tiles)) {
+    tileUrls = meta.tiles;
+    if (typeof meta.minzoom === 'number') tileMinzoom = meta.minzoom;
+    if (typeof meta.maxzoom === 'number') tileMaxzoom = meta.maxzoom;
+  }
+} catch {}
 ---
 
 <div class="map-container notranslate" translate="no">
   <div id="map" role="img" aria-label="World map showing TRACKID duck sticker sightings across cities and countries" style="height: 400px; width: 100%; background: var(--surface); border: 1px solid var(--weld);"></div>
 </div>
 
-<link rel="stylesheet" href="/vendor/maplibre-gl.css" />
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
 
-<script is:inline define:vars={{ markers, customers, routes }}>
+<script is:inline define:vars={{ markers, customers, routes, tileUrls, tileMinzoom, tileMaxzoom }}>
   function esc(s) {
     var d = document.createElement('div');
     d.textContent = s || '';
     return d.innerHTML;
   }
 
-  // Everything map-related is served same-origin via /api/tiles (proxying OpenFreeMap)
-  // so the map works in mainland China, where tiles.openfreemap.org is unreachable.
   function styleUrl(dark) {
-    return '/api/tiles/styles/' + (dark ? 'dark' : 'positron');
+    return 'https://tiles.openfreemap.org/styles/' + (dark ? 'dark' : 'positron');
   }
 
-  // The style JSON still embeds absolute openfreemap URLs for glyphs/sprite/sources.
-  // Rewrite them all to the same-origin proxy in one pass.
+  // Fetch style and rewrite the openmaptiles source to use SSR-resolved tile URLs,
+  // skipping the browser-blocked /planet TileJSON request.
   function loadStyle(dark) {
-    return fetch(styleUrl(dark)).then(function(r) { return r.text(); }).then(function(text) {
-      return JSON.parse(text.replace(/https:\/\/tiles\.openfreemap\.org\//g, '/api/tiles/'));
+    return fetch(styleUrl(dark)).then(function(r) { return r.json(); }).then(function(style) {
+      if (tileUrls && tileUrls.length && style && style.sources && style.sources.openmaptiles) {
+        style.sources.openmaptiles = {
+          type: 'vector',
+          tiles: tileUrls,
+          minzoom: tileMinzoom,
+          maxzoom: tileMaxzoom,
+        };
+      }
+      return style;
     });
   }
 
   var script = document.createElement('script');
-  script.src = '/vendor/maplibre-gl.js';
+  script.src = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';
   script.onload = function() {
     var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 

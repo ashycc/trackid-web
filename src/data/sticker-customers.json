@@ -672,21 +672,9 @@
     "lng": 25.7306
   },
   {
-    "city": "PARIS 13E ARRONDISSEMENT",
+    "city": "Paris",
     "country": "France",
     "lat": 48.8373,
     "lng": 2.3617
-  },
-  {
-    "city": "Москва г",
-    "country": "Russia",
-    "lat": 43.3652,
-    "lng": 132.8337
-  },
-  {
-    "city": "Palma",
-    "country": "Spain",
-    "lat": 39.5677,
-    "lng": 2.6568
   }
 ]

@@ -676,5 +676,11 @@
     "country": "France",
     "lat": 48.8373,
     "lng": 2.3617
+  },
+  {
+    "city": "Gros-de-Vaud",
+    "country": "Switzerland",
+    "lat": 46.6597,
+    "lng": 6.6551
   }
 ]

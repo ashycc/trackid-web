@@ -682,5 +682,11 @@
     "country": "Switzerland",
     "lat": 46.6597,
     "lng": 6.6551
+  },
+  {
+    "city": "Aabybro",
+    "country": "Denmark",
+    "lat": 57.1625,
+    "lng": 9.7273
   }
 ]

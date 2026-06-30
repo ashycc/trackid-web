@@ -688,5 +688,11 @@
     "country": "Denmark",
     "lat": 57.1625,
     "lng": 9.7273
+  },
+  {
+    "city": "San francisco",
+    "country": "United States",
+    "lat": 37.7787,
+    "lng": -122.4119
   }
 ]

@@ -16,6 +16,7 @@
     "@astrojs/sitemap": "^3.7.2",
     "@astrojs/vercel": "^10.0.3",
     "@supabase/supabase-js": "^2.100.1",
+    "@vercel/analytics": "^2.0.1",
     "astro": "^6.1.1",
     "leaflet": "^1.9.4",
     "resend": "^6.9.4"

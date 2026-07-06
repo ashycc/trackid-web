@@ -503,3 +503,15 @@ body { top: 0 !important; }
   color: var(--muted);
   letter-spacing: 1px;
 }
+
+.footer-shop-link {
+  text-decoration: none;
+  border-bottom: 1px solid var(--muted);
+  padding-bottom: 1px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.footer-shop-link:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}

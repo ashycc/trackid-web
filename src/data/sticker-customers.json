@@ -694,5 +694,17 @@
     "country": "United States",
     "lat": 37.7787,
     "lng": -122.4119
+  },
+  {
+    "city": "Иваново г",
+    "country": "Russia",
+    "lat": 57.0,
+    "lng": 40.979
+  },
+  {
+    "city": "Edmonton",
+    "country": "Canada",
+    "lat": 53.5403,
+    "lng": -113.4925
   }
 ]

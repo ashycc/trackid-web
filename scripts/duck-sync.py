@@ -12,8 +12,8 @@
     1. 解析 xlsx → 过滤(只烤鸭贴纸 + 只已付款)
     2. 读取飞书现有客户(全文 fetch + 反转义) → 邮箱去重 → 得出真正新增
     3. 新城市 Nominatim 地理编码 → 追加 src/data/sticker-customers.json
-    4. 飞书: 按国家章节 replace_range 更新受影响的表(序号续上, 标🆕, 无重复)
-            + 更新顶部统计行 + 「📊 汇总」「🆕 本次新增」
+    4. 飞书: 去重后全量重建整篇文档(v2 overwrite)——新客户插到本国表最前标🆕，
+            重写顶部统计行 + 各国表 + 「📊 汇总」「🆕 本次新增」
     5. git commit & push (触发 Vercel)
 
 依赖: openpyxl, lark-cli(已登录 --as user), curl
@@ -51,7 +51,11 @@ COUNTRY = {
     'Czechia': ('捷克', '🇨🇿', 'Czechia'), 'Czech Republic': ('捷克', '🇨🇿', 'Czechia'),
     'Greece': ('希腊', '🇬🇷', 'Greece'), 'Brazil': ('巴西', '🇧🇷', 'Brazil'),
     'Uzbekistan': ('乌兹别克斯坦', '🇺🇿', 'Uzbekistan'), 'China': ('中国', '🇨🇳', 'China'), '中国': ('中国', '🇨🇳', 'China'),
+    'Slovakia': ('斯洛伐克', '🇸🇰', 'Slovakia'), '斯洛伐克': ('斯洛伐克', '🇸🇰', 'Slovakia'),
 }
+# 飞书 parse 出的国家 key 是中文名——中文 key 缺失时全量重建会把该国旗子降级成 🏳️
+for _v in list(COUNTRY.values()):
+    COUNTRY.setdefault(_v[0], _v)
 # 这些国家速卖通的"城市"列是行政区，真实城市在"扩展城市"列
 EXT_CITY = {'Germany', '德国', 'Italy', '意大利', 'Poland', '波兰', 'Mexico', '墨西哥'}
 STATUS_MAP = {'交易成功': '✅', '已完成': '✅', '等待买家收货': '等待收货',
@@ -287,80 +291,107 @@ def render_table(cz, flag, recs):
     return '\n'.join(out) + '\n'
 
 
-def docs_update(mode, markdown=None, by_title=None, ellipsis=None):
-    cmd = ['lark-cli', 'docs', '+update', '--doc', DOC_TOKEN, '--as', 'user', '--mode', mode]
-    if by_title:
-        cmd += ['--selection-by-title', by_title]
-    if ellipsis:
-        cmd += ['--selection-with-ellipsis', ellipsis]
-    # markdown 经临时文件传入(用相对路径，飞书 @file 限制)
-    if markdown is not None:
-        os.makedirs(os.path.join(ROOT, '.tmp_feishu'), exist_ok=True)
-        fn = os.path.join('.tmp_feishu', 'blk.md')
-        open(os.path.join(ROOT, fn), 'w', encoding='utf-8').write(markdown)
-        cmd += ['--markdown', '@' + fn]
-    p = run(cmd)
-    ok = '"success": true' in p.stdout or '更新成功' in p.stdout
+def detect_duplicate_sections(md):
+    """返回文档中重复出现的章节标题（忽略汇总/新增章节）。"""
+    counts = {}
+    for t in re.findall(r'^##\s+.+', md, re.M):
+        if '汇总' in t or '新增' in t:
+            continue
+        counts[t] = counts.get(t, 0) + 1
+    return [t for t, n in counts.items() if n > 1]
+
+
+def dedup_groups(raw_groups):
+    """全局邮箱去重（保持首次出现顺序），去掉 🆕 标记。
+    返回 (去重后 groups dict, unique_emails set)。"""
+    seen = set()
+    result = {}
+    for cz, recs in raw_groups.items():
+        clean = []
+        for r in recs:
+            email = unescape((r.get('邮箱', '') or '').strip().lower())
+            if email and email in seen:
+                continue
+            if email:
+                seen.add(email)
+            r2 = dict(r)
+            r2['收件人'] = r2.get('收件人', '').replace(' 🆕', '').strip()
+            clean.append(r2)
+        if clean:
+            result[cz] = clean
+    return result, seen
+
+
+def overwrite_full_doc(groups, new_custs, apply):
+    """把完整 groups（已含新客户行）以 overwrite 模式写回飞书。
+    返回 (ok, err, total, items_sum, n_countries)。"""
+    today = datetime.date.today().strftime('%Y-%m-%d')
+    total = sum(len(v) for v in groups.values())
+    items_sum = sum(int(re.sub(r'\D', '', r.get('数量', '1')) or 1)
+                    for v in groups.values() for r in v)
+    n_countries = len([k for k, v in groups.items() if v])
+
+    parts = []
+    stat = (f"Columbus Parody Bike Sticker Peking Duck（商品ID: {DUCK_ID}）"
+            f"统计截至 {today} | 共 **{total}** 位客户 · **{items_sum}** 件 | **{n_countries}** 个国家")
+    parts.append(stat)
+    parts.append('')
+
+    slovakia_key = None
+    for cz, recs in groups.items():
+        if not recs:
+            continue
+        if 'Slovakia' in cz or 'Slovak' in cz:
+            slovakia_key = cz
+            continue
+        _, flag, _ = COUNTRY.get(cz, (cz, '🏳️', cz))
+        parts.append(render_table(cz, flag, recs))
+        parts.append('')
+
+    dist = ' / '.join(
+        f"{COUNTRY.get(cz,(cz,'🏳️',cz))[1]}{cz}{len(recs)}"
+        for cz, recs in groups.items() if recs and 'Slovakia' not in cz and 'Slovak' not in cz
+    )
+    summary_tail = ''
+    if new_custs:
+        lines = '\n\n'.join(f"- {r['flag']} {r['name']}（{r['date']}, {r['qty']}件）"
+                             for r in new_custs)
+        summary_tail = f"\n### 🆕 本次新增 {len(new_custs)} 位客户：\n\n{lines}\n"
+    summary_md = (
+        f"## 📊 汇总\n\n"
+        f"- **总客户数：{total} 人**（上次 {total - len(new_custs)} → 新增 {len(new_custs)}）\n\n"
+        f"- **总销售件数：{items_sum} 件**\n\n"
+        f"- **国家：{n_countries} 个**\n\n"
+        f"- **国家分布：** {dist}\n"
+        + summary_tail
+    )
+    parts.append(summary_md)
+    parts.append('')
+
+    if slovakia_key and groups.get(slovakia_key):
+        _, flag, _ = COUNTRY.get(slovakia_key, (slovakia_key, '🏳️', slovakia_key))
+        parts.append(render_table(slovakia_key, flag, groups[slovakia_key]))
+
+    full_md = '\n'.join(parts)
+
+    if not apply:
+        return True, '(dry-run)', total, items_sum, n_countries
+
+    tmp = os.path.join(ROOT, '.tmp_feishu', 'full_rebuild.md')
+    os.makedirs(os.path.join(ROOT, '.tmp_feishu'), exist_ok=True)
+    open(tmp, 'w', encoding='utf-8').write(full_md)
+
+    # lark-cli ≥1.0.65 v2 接口: --command overwrite --doc-format markdown --content @file
+    # (旧 --mode/--markdown v1 接口 2026-07 已下线)。@file 必须是相对 ROOT 的路径。
+    p = run(['lark-cli', 'docs', '+update', '--doc', DOC_TOKEN, '--as', 'user',
+             '--command', 'overwrite', '--doc-format', 'markdown',
+             '--content', '@.tmp_feishu/full_rebuild.md'])
+    ok = '"ok": true' in p.stdout and '"failed"' not in p.stdout
     err = ''
     if not ok:
         m = re.search(r'"message":\s*"([^"]+)"', p.stdout)
-        err = m.group(1) if m else (p.stdout[:200] or p.stderr[:200])
-    return ok, err
-
-
-def update_feishu(doc_groups, new_custs, summary, apply):
-    """把新客户合并进受影响国家表并写回"""
-    affected = {}            # cz -> 合并后的记录列表
-    titles = {}              # cz -> (flag, 旧标题人数)
-    # 旧标题人数(用于 selection-by-title 定位)
-    for cz, recs in doc_groups.items():
-        titles[cz] = len(recs)
-
-    for r in new_custs:
-        cz = r['country_zh']
-        flag = r['flag']
-        if cz not in affected:
-            affected[cz] = list(doc_groups.get(cz, []))
-        newrow = {'收件人': r['name'] + ' 🆕', '电话': r['phone'], '邮箱': r['email'],
-                  '收货地址': r['address'], '数量': str(r['qty']),
-                  '下单时间': r['date'], '状态': r['status'], '买家秀': ''}
-        affected[cz].insert(0, newrow)   # 新客户排到本国表最前
-        affected.setdefault('_flag_' + cz, flag)
-
-    results = []
-    for cz in [k for k in affected if not k.startswith('_flag_')]:
-        flag = affected['_flag_' + cz]
-        recs = affected[cz]
-        md = render_table(cz, flag, recs)
-        old_n = titles.get(cz)
-        if old_n is not None:
-            # 已存在的国家表 → replace_range 整章替换
-            title = f"## {flag} {cz}（{old_n}人）"
-            if apply:
-                ok, err = docs_update('replace_range', markdown=md, by_title=title)
-            else:
-                ok, err = True, '(dry-run)'
-            results.append((cz, 'replace', ok, err))
-        else:
-            # 新国家 → append 到文末(汇总之前没法精确，简单 append)
-            if apply:
-                ok, err = docs_update('append', markdown='\n' + md)
-            else:
-                ok, err = True, '(dry-run)'
-            results.append((cz, 'append(新国家)', ok, err))
-
-    # 更新统计行
-    if apply:
-        for old, new in summary['stat_replacements']:
-            docs_update('replace_all', markdown=new, ellipsis=old)
-        # 更新「📊 汇总」章节
-        ok, err = docs_update('replace_range', markdown=summary['summary_md'], by_title='## 📊 汇总')
-        results.append(('汇总', 'replace', ok, err))
-
-    if apply:
-        import shutil
-        shutil.rmtree(os.path.join(ROOT, '.tmp_feishu'), ignore_errors=True)
-    return results
+        err = m.group(1) if m else (p.stdout[:300] or p.stderr[:300])
+    return ok, err, total, items_sum, n_countries
 
 
 # ─── 主流程 ──────────────────────────────────────────────────────────────
@@ -411,13 +442,26 @@ def main():
         log(f"\n❌ 只读到 {_cur} 位飞书客户，明显不全(正常应 90+)。为避免重复写入已中止。")
         log("   解决: 飞书「下载为 Markdown」后用 --doc-md <文件路径> 重跑。\n")
         sys.exit(2)
-    doc_emails = {(r.get('邮箱', '') or '').strip().lower()
-                  for recs in doc_groups.values() for r in recs if r.get('邮箱', '').strip()}
-    cur_total = sum(len(v) for v in doc_groups.values())
-    cur_items = sum(int(re.sub(r'\D', '', r.get('数量', '1')) or 1)
-                    for recs in doc_groups.values() for r in recs)
-    cur_countries = len([k for k, v in doc_groups.items() if v])
-    log(f"   飞书现有: {cur_total} 人 / {cur_items} 件 / {cur_countries} 国 / {len(doc_emails)} 唯一邮箱")
+
+    # 重复章节检测：文档被意外复制两份时，同一章节标题出现多次
+    dup_sections = detect_duplicate_sections(md)
+    will_overwrite = bool(dup_sections)
+    if dup_sections:
+        log(f"   ⚠️  检测到 {len(dup_sections)} 个重复章节（如 {dup_sections[0]!r}），自动去重修复…")
+        doc_groups, doc_emails = dedup_groups(doc_groups)
+        cur_total = sum(len(v) for v in doc_groups.values())
+        cur_items = sum(int(re.sub(r'\D', '', r.get('数量', '1')) or 1)
+                        for v in doc_groups.values() for r in v)
+        cur_countries = len([k for k, v in doc_groups.items() if v])
+        log(f"   去重后: {cur_total} 人 / {cur_items} 件 / {cur_countries} 国 / {len(doc_emails)} 唯一邮箱")
+    else:
+        doc_emails = {(r.get('邮箱', '') or '').strip().lower()
+                      for recs in doc_groups.values() for r in recs if r.get('邮箱', '').strip()}
+        cur_total = sum(len(v) for v in doc_groups.values())
+        cur_items = sum(int(re.sub(r'\D', '', r.get('数量', '1')) or 1)
+                        for recs in doc_groups.values() for r in recs)
+        cur_countries = len([k for k, v in doc_groups.items() if v])
+        log(f"   飞书现有: {cur_total} 人 / {cur_items} 件 / {cur_countries} 国 / {len(doc_emails)} 唯一邮箱")
 
     # 去重(批内也去重)
     new_custs, dup, seen = [], [], set()
@@ -432,56 +476,43 @@ def main():
     for r in new_custs:
         log(f"   ★ {r['name'][:22]:<24} {r['city'][:14]:<16} {r['country_zh']:<8} {r['email']}")
     if not new_custs:
+        if will_overwrite:
+            # 虽无新增客户，仍需修复文档重复问题
+            log("\n✅ 没有新增客户，但检测到文档重复——执行去重修复。")
+            log(f"\n⑤ 飞书文档（去重修复）…")
+            ok, err, new_total, new_items, new_countries = overwrite_full_doc(doc_groups, [], apply)
+            log(f"   {'✓ 修复成功' if ok else '✗ 修复失败'}: {new_total}人/{new_items}件/{new_countries}国"
+                + (f"  → {err}" if not ok else ''))
+            log(f"\n{'✅ 完成' if apply else '👀 预览结束 — 加 --apply 真正执行'}")
+            return
         log("\n✅ 没有新增客户，无需更新。\n")
         return
-
-    # 计算新统计
-    new_total = cur_total + len(new_custs)
-    new_items = cur_items + sum(r['qty'] for r in new_custs)
-    new_country_set = set(k for k, v in doc_groups.items() if v) | {r['country_zh'] for r in new_custs}
-    new_countries = len(new_country_set)
-    asof = max([r['iso'] for r in parsed if r['iso']] + ['2026-01-01'])
-
-    # 统计行替换(数字带 **加粗**)
-    stat_repl = [
-        (f"共 **{cur_total}** 位客户", f"共 **{new_total}** 位客户"),
-        (f"**{cur_items}** 件", f"**{new_items}** 件"),
-    ]
-    # 国家数变化才替换
-    if new_countries != cur_countries:
-        stat_repl.append((f"**{cur_countries}** 个国家", f"**{new_countries}** 个国家"))
-
-    # 汇总章节
-    dist = ' / '.join(f"{COUNTRY.get(cz,(cz,'🏳️',cz))[1]}{cz}{len(doc_groups.get(cz,[]))+sum(1 for r in new_custs if r['country_zh']==cz)}"
-                      for cz in new_country_set)
-    new_lines = '\n\n'.join(f"- {r['flag']} {r['name']}（{r['date']}, {r['qty']}件）" for r in new_custs)
-    summary_md = f"""## 📊 汇总
-
-- **总客户数：{new_total} 人**（上次 {cur_total} → 新增 {len(new_custs)}）
-
-- **总销售件数：{new_items} 件**
-
-- **国家：{new_countries} 个**
-
-- **国家分布：** {dist}
-
-### 🆕 本次新增 {len(new_custs)} 位客户：
-
-{new_lines}
-"""
-    summary = {'stat_replacements': stat_repl, 'summary_md': summary_md}
 
     # 3. 网站
     log(f"\n④ 网站地图({'写入' if apply else '预览'})…")
     web = update_website(new_custs, apply)
     log(f"   脉冲点: {web['before']} → {web['after']} (+{web['added']}) | 城市 {web['cities']} | 国家 {web['countries']}")
 
-    # 4. 飞书
+    # 4. 飞书 — 一律去重后全量重建(overwrite)：
+    #    lark-cli v2 已下线 replace_range，且历史上按章节 replace 两次把文档结构
+    #    搞坏(章节复制/错并)，全量重建反而是两次验证过的稳妥路径。
     log(f"\n⑤ 飞书文档({'写入' if apply else '预览'})…")
-    fb = update_feishu(doc_groups, new_custs, summary, apply)
+    if will_overwrite:
+        log(f"   (文档含重复章节，重建时一并去重)")
+    merged = dict(doc_groups)
+    for r in new_custs:
+        cz = r['country_zh']
+        merged.setdefault(cz, [])
+        newrow = {'收件人': r['name'] + ' 🆕', '电话': r['phone'], '邮箱': r['email'],
+                  '收货地址': r['address'], '数量': str(r['qty']),
+                  '下单时间': r['date'], '状态': r['status'], '买家秀': ''}
+        merged[cz].insert(0, newrow)
+    ok, err, new_total, new_items, new_countries = overwrite_full_doc(merged, new_custs, apply)
+    fb = [('全量重建', 'overwrite', ok, err)]
+
     for cz, op, ok, err in fb:
         log(f"   {'✓' if ok else '✗'} {cz} [{op}]" + ('' if ok else f"  → {err}"))
-    log(f"   统计行: 共{cur_total}→{new_total}人 · {cur_items}→{new_items}件 · {cur_countries}→{new_countries}国")
+    log(f"   统计: 共{cur_total}→{new_total}人 · {cur_items}→{new_items}件 · {cur_countries}→{new_countries}国")
 
     # 5. git push
     if apply and web['added'] > 0:

@@ -52,6 +52,7 @@ COUNTRY = {
     'Greece': ('希腊', '🇬🇷', 'Greece'), 'Brazil': ('巴西', '🇧🇷', 'Brazil'),
     'Uzbekistan': ('乌兹别克斯坦', '🇺🇿', 'Uzbekistan'), 'China': ('中国', '🇨🇳', 'China'), '中国': ('中国', '🇨🇳', 'China'),
     'Slovakia': ('斯洛伐克', '🇸🇰', 'Slovakia'), '斯洛伐克': ('斯洛伐克', '🇸🇰', 'Slovakia'),
+    'Belarus': ('白俄罗斯', '🇧🇾', 'Belarus'), '白俄罗斯': ('白俄罗斯', '🇧🇾', 'Belarus'),
 }
 # 飞书 parse 出的国家 key 是中文名——中文 key 缺失时全量重建会把该国旗子降级成 🏳️
 for _v in list(COUNTRY.values()):
@@ -190,7 +191,9 @@ def parse_doc(md):
         title = h.group(1)
         if '汇总' in title or '新增' in title:
             continue
-        cz = re.sub(r'[\U0001F1E6-\U0001F1FF]', '', title)
+        # 国旗(区域指示符)之外还要剥 🏳️ 白旗+变体选择符——字典缺国时章节标题落过 🏳️，
+        # 不剥的话下次 parse 的 key 变成「🏳️ Xxx」永远查不到字典、旗子越叠越多
+        cz = re.sub(r'[\U0001F1E6-\U0001F1FF\U0001F3F3️]', '', title)
         cz = re.sub(r'（.*?）|\(.*?\)', '', cz).strip()
         groups.setdefault(cz, [])
         if '<lark-table' in part or '<table' in part:

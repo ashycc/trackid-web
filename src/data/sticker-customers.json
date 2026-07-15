@@ -706,5 +706,11 @@
     "country": "Canada",
     "lat": 53.5403,
     "lng": -113.4925
+  },
+  {
+    "city": "Gomel",
+    "country": "Belarus",
+    "lat": 52.4248,
+    "lng": 31.0195
   }
 ]

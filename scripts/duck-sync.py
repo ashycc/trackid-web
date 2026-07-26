@@ -33,6 +33,7 @@ COUNTRY = {
     'Germany': ('德国', '🇩🇪', 'Germany'), '德国': ('德国', '🇩🇪', 'Germany'),
     'France': ('法国', '🇫🇷', 'France'), '法国': ('法国', '🇫🇷', 'France'),
     'South Korea': ('韩国', '🇰🇷', 'South Korea'), 'Korea, Republic of': ('韩国', '🇰🇷', 'South Korea'), '韩国': ('韩国', '🇰🇷', 'South Korea'),
+    'Korea': ('韩国', '🇰🇷', 'South Korea'), 'Republic of Korea': ('韩国', '🇰🇷', 'South Korea'), '대한민국': ('韩国', '🇰🇷', 'South Korea'),
     'Australia': ('澳大利亚', '🇦🇺', 'Australia'), '澳大利亚': ('澳大利亚', '🇦🇺', 'Australia'),
     'Switzerland': ('瑞士', '🇨🇭', 'Switzerland'), '瑞士': ('瑞士', '🇨🇭', 'Switzerland'),
     'Belgium': ('比利时', '🇧🇪', 'Belgium'), 'Netherlands': ('荷兰', '🇳🇱', 'Netherlands'),
@@ -59,6 +60,41 @@ for _v in list(COUNTRY.values()):
     COUNTRY.setdefault(_v[0], _v)
 # 这些国家速卖通的"城市"列是行政区，真实城市在"扩展城市"列
 EXT_CITY = {'Germany', '德国', 'Italy', '意大利', 'Poland', '波兰', 'Mexico', '墨西哥'}
+# 网站 JSON 的 city 一律英文：非拉丁城市名必须转写，否则 Nominatim 会定位到别处
+CITY_LATIN = {
+    '서울': 'Seoul', '부산': 'Busan', '대구': 'Daegu', '인천': 'Incheon',
+    '광주': 'Gwangju', '대전': 'Daejeon', '울산': 'Ulsan', '세종': 'Sejong',
+    '수원': 'Suwon', '용인': 'Yongin', '성남': 'Seongnam', '고양': 'Goyang',
+    '창원': 'Changwon', '청주': 'Cheongju', '전주': 'Jeonju', '천안': 'Cheonan',
+    '안산': 'Ansan', '안양': 'Anyang', '남양주': 'Namyangju', '화성': 'Hwaseong',
+    '제주': 'Jeju', '군산': 'Gunsan', '광명': 'Gwangmyeong', '달성': 'Dalseong',
+    '김해': 'Gimhae', '평택': 'Pyeongtaek', '포항': 'Pohang', '원주': 'Wonju',
+    '의정부': 'Uijeongbu', '춘천': 'Chuncheon', '부천': 'Bucheon', '파주': 'Paju',
+    'москва': 'Moscow', 'санкт-петербург': 'Saint Petersburg', 'оренбург': 'Orenburg',
+    'челябинск': 'Chelyabinsk', 'иваново': 'Ivanovo', 'екатеринбург': 'Yekaterinburg',
+    'новосибирск': 'Novosibirsk', 'казань': 'Kazan', 'нижний новгород': 'Nizhny Novgorod',
+    'самара': 'Samara', 'краснодар': 'Krasnodar', 'ростов-на-дону': 'Rostov-on-Don',
+    'уфа': 'Ufa', 'пермь': 'Perm', 'воронеж': 'Voronezh', 'волгоград': 'Volgograd',
+    'саратов': 'Saratov', 'тюмень': 'Tyumen', 'тольятти': 'Tolyatti', 'ижевск': 'Izhevsk',
+    'барнаул': 'Barnaul', 'ульяновск': 'Ulyanovsk', 'иркутск': 'Irkutsk',
+    'хабаровск': 'Khabarovsk', 'владивосток': 'Vladivostok', 'ярославль': 'Yaroslavl',
+    'томск': 'Tomsk', 'калининград': 'Kaliningrad', 'сочи': 'Sochi', 'тула': 'Tula',
+    'рязань': 'Ryazan', 'минск': 'Minsk', 'гомель': 'Gomel',
+}
+KR_SUFFIX = re.compile(r'(광역시|특별자치시|특별자치도|특별시|시|도)$')
+
+
+def norm_city(city, state, cz):
+    """网站 city 规范化：区/县级归主城市 + 非拉丁名转写成英文。
+    查不到映射时原样返回——geocode 多半会定位错，dry-run 报告里核对坐标。"""
+    c = (city or '').strip()
+    st = (state or '').strip()
+    if cz == '韩国':
+        # 「XX구/군」是区级行政区 → 归到州/省里的主城市(광주광역시 → 광주 → Gwangju)
+        c = KR_SUFFIX.sub('', st) if (re.search(r'[구군]$', c) and st) else KR_SUFFIX.sub('', c)
+    elif cz in ('俄罗斯', '白俄罗斯'):
+        c = re.sub(r'\s+г\.?$', '', c)   # 速卖通俄语城市带 город 后缀:「Оренбург г」
+    return CITY_LATIN.get(c.lower(), CITY_LATIN.get(c, c))
 STATUS_MAP = {'交易成功': '✅', '已完成': '✅', '等待买家收货': '等待收货',
               '卖家已发货': '已发货', '等待卖家发货': '待发货', '买家已付款': '已付款'}
 HDR = ['序号', '收件人', '电话', '邮箱', '收货地址', '数量', '下单时间', '状态', '买家秀']
@@ -128,7 +164,7 @@ def parse_xlsx(path):
             'date': md, 'iso': iso,
             'status': STATUS_MAP.get(c(r, I['status']), c(r, I['status'])),
             'country_zh': cz, 'flag': flag, 'country_en': en,
-            'city': city, 'state': c(r, I['state']),
+            'city': norm_city(city, c(r, I['state']), cz), 'state': c(r, I['state']),
         })
     return out
 

@@ -712,5 +712,35 @@
     "country": "Belarus",
     "lat": 52.4248,
     "lng": 31.0195
+  },
+  {
+    "city": "Orenburg",
+    "country": "Russia",
+    "lat": 51.7638,
+    "lng": 55.0948
+  },
+  {
+    "city": "Madrid",
+    "country": "Spain",
+    "lat": 40.4254,
+    "lng": -3.7033
+  },
+  {
+    "city": "Woodville",
+    "country": "Australia",
+    "lat": -34.8853,
+    "lng": 138.5391
+  },
+  {
+    "city": "Gwangju",
+    "country": "South Korea",
+    "lat": 35.1488,
+    "lng": 126.8216
+  },
+  {
+    "city": "Loftus",
+    "country": "Australia",
+    "lat": -34.0499,
+    "lng": 151.045
   }
 ]

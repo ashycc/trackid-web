@@ -742,5 +742,53 @@
     "country": "Australia",
     "lat": -34.0499,
     "lng": 151.045
+  },
+  {
+    "city": "Sao Paulo",
+    "country": "Brazil",
+    "lat": -23.5597,
+    "lng": -46.6364
+  },
+  {
+    "city": "Vitry-sur-seine",
+    "country": "France",
+    "lat": 48.7935,
+    "lng": 2.3929
+  },
+  {
+    "city": "Oulu",
+    "country": "Finland",
+    "lat": 65.0112,
+    "lng": 25.466
+  },
+  {
+    "city": "Yekaterinburg",
+    "country": "Russia",
+    "lat": 56.8402,
+    "lng": 60.5948
+  },
+  {
+    "city": "Houston",
+    "country": "United States",
+    "lat": 29.7551,
+    "lng": -95.3743
+  },
+  {
+    "city": "Guadalajara",
+    "country": "Mexico",
+    "lat": 20.6668,
+    "lng": -103.3348
+  },
+  {
+    "city": "Highland Park",
+    "country": "United States",
+    "lat": 42.1792,
+    "lng": -87.7908
+  },
+  {
+    "city": "Bangkok",
+    "country": "Thailand",
+    "lat": 13.7559,
+    "lng": 100.4973
   }
 ]

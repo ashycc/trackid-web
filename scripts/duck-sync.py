@@ -51,6 +51,7 @@ COUNTRY = {
     'Ireland': ('爱尔兰', '🇮🇪', 'Ireland'), 'New Zealand': ('新西兰', '🇳🇿', 'New Zealand'),
     'Czechia': ('捷克', '🇨🇿', 'Czechia'), 'Czech Republic': ('捷克', '🇨🇿', 'Czechia'),
     'Greece': ('希腊', '🇬🇷', 'Greece'), 'Brazil': ('巴西', '🇧🇷', 'Brazil'),
+    'Thailand': ('泰国', '🇹🇭', 'Thailand'), '泰国': ('泰国', '🇹🇭', 'Thailand'),
     'Uzbekistan': ('乌兹别克斯坦', '🇺🇿', 'Uzbekistan'), 'China': ('中国', '🇨🇳', 'China'), '中国': ('中国', '🇨🇳', 'China'),
     'Slovakia': ('斯洛伐克', '🇸🇰', 'Slovakia'), '斯洛伐克': ('斯洛伐克', '🇸🇰', 'Slovakia'),
     'Belarus': ('白俄罗斯', '🇧🇾', 'Belarus'), '白俄罗斯': ('白俄罗斯', '🇧🇾', 'Belarus'),
@@ -94,6 +95,10 @@ def norm_city(city, state, cz):
         c = KR_SUFFIX.sub('', st) if (re.search(r'[구군]$', c) and st) else KR_SUFFIX.sub('', c)
     elif cz in ('俄罗斯', '白俄罗斯'):
         c = re.sub(r'\s+г\.?$', '', c)   # 速卖通俄语城市带 город 后缀:「Оренбург г」
+    elif cz == '泰国' and st.lower() == 'bangkok':
+        # Bangkok exports may put the district (e.g. Bang Phlat) in “城市”.
+        # The public map is city-level, so consolidate districts into Bangkok.
+        c = 'Bangkok'
     return CITY_LATIN.get(c.lower(), CITY_LATIN.get(c, c))
 STATUS_MAP = {'交易成功': '✅', '已完成': '✅', '等待买家收货': '等待收货',
               '卖家已发货': '已发货', '等待卖家发货': '待发货', '买家已付款': '已付款'}
@@ -144,7 +149,13 @@ def parse_xlsx(path):
         cr = c(r, I['country'])
         cz, flag, en = COUNTRY.get(cr, (cr, '🏳️', cr))
         use_ext = cr in EXT_CITY or cz in ('德国', '意大利', '波兰', '墨西哥')
-        city = c(r, I['extcity']) if (use_ext and c(r, I['extcity'])) else c(r, I['city'])
+        # Newer Mexico exports put the actual city in “城市” and the
+        # neighbourhood in “扩展城市”; prefer the city to avoid mapping a
+        # Guadalajara order to an unrelated locality with the same name.
+        if cz == '墨西哥':
+            city = c(r, I['city']) or c(r, I['extcity'])
+        else:
+            city = c(r, I['extcity']) if (use_ext and c(r, I['extcity'])) else c(r, I['city'])
         if not city:
             city = c(r, I['extcity']) or c(r, I['state'])
         qty = 1
@@ -152,9 +163,16 @@ def parse_xlsx(path):
         if m:
             qty = int(m.group(1))
         t = c(r, I['time'])
-        dm = re.match(r'(\d{2})/(\d{2})/(\d{4})', t)
-        md = f"{dm.group(1)}/{dm.group(2)}" if dm else t
-        iso = f"{dm.group(3)}-{dm.group(1)}-{dm.group(2)}" if dm else ''
+        dm_us = re.match(r'(\d{2})/(\d{2})/(\d{4})', t)
+        dm_iso = re.match(r'(\d{4})[./-](\d{2})[./-](\d{2})', t)
+        if dm_us:
+            md = f"{dm_us.group(1)}/{dm_us.group(2)}"
+            iso = f"{dm_us.group(3)}-{dm_us.group(1)}-{dm_us.group(2)}"
+        elif dm_iso:
+            md = f"{dm_iso.group(2)}/{dm_iso.group(3)}"
+            iso = f"{dm_iso.group(1)}-{dm_iso.group(2)}-{dm_iso.group(3)}"
+        else:
+            md, iso = t, ''
         addr = re.sub(r'[、，]', ', ', c(r, I['fulladdr'])).replace('|', '／')
         phone = (c(r, I['phone_cc']) + ' ' + c(r, I['mobile'])).strip()
         out.append({
